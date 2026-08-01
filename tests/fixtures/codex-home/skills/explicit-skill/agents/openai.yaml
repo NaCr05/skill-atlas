@@ -1,0 +1,5 @@
+interface:
+  display_name: Explicit Interview
+  default_prompt: "$explicit-skill\n\n请逐个问题检验我的计划。"
+policy:
+  allow_implicit_invocation: false

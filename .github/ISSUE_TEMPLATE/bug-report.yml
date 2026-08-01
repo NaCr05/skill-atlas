@@ -1,0 +1,64 @@
+name: Bug report / 缺陷报告
+description: Report a reproducible problem without including secrets or private Skill content.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. 请先移除 API Key、个人路径和非公开 Skill 内容。安全漏洞请使用私密漏洞报告，不要填写此表。
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem summary / 问题概述
+      description: What happened, and what were you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps / 复现步骤
+      placeholder: |
+        1. Start Skill Atlas...
+        2. Select...
+        3. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior / 预期与实际结果
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version / Windows 版本
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version / Node.js 版本
+      placeholder: Output of node --version
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Skill Atlas version or commit / 版本或提交
+      placeholder: v0.1.0 or commit hash
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots / 脱敏日志或截图
+      description: Remove tokens, usernames, personal paths, and private Skill content before attaching anything.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check / 安全确认
+      options:
+        - label: I removed secrets and private data from this report. / 我已移除密钥和私人数据。
+          required: true
+        - label: This is not a security vulnerability. / 这不是安全漏洞。
+          required: true

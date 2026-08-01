@@ -1,0 +1,50 @@
+name: Feature request / 功能建议
+description: Propose an improvement and explain the user problem it solves.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping shape Skill Atlas. 请重点说明用户问题和预期结果。
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem / 用户问题
+      description: Who has this problem, and when does it occur?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome / 期望结果
+      description: Describe the experience you want, without assuming a specific implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested approach / 建议方案
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered / 考虑过的替代方案
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / 功能范围
+      options:
+        - Local Skill inventory / 本地 Skill 清单
+        - Search and recommendation / 搜索与推荐
+        - Prompt and Codex workflow / Prompt 与 Codex 流程
+        - Marketplace and installation / 市场与安装
+        - Interface and accessibility / 界面与无障碍
+        - Documentation or contributor experience / 文档与贡献体验
+        - Other / 其他
+    validations:
+      required: true
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check / 范围确认
+      options:
+        - label: I understand the current public version is Windows-first and Codex-focused. / 我了解当前公开版本优先支持 Windows 和 Codex。
+          required: true
