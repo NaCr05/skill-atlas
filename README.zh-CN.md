@@ -30,9 +30,11 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 
 环境要求：Windows 10/11、Node.js 20 或更高版本，以及 npm。
 
-```powershell
+下面这组命令可以同时用于 PowerShell 和命令提示符（CMD）：
+
+```text
 git clone https://github.com/NaCr05/skill-atlas.git
-Set-Location skill-atlas
+cd skill-atlas
 npm ci
 npm run dev
 ```
@@ -44,7 +46,7 @@ npm run dev
 3. 打开结果，确认调用规则，然后点击**复制调用 Prompt**。
 4. 把 Prompt 粘贴到 Codex，再补充你的具体任务信息。
 
-自定义目录、常见问题和生产模式请查看[完整快速启动指南](docs/quick-start.md#中文快速启动)。
+如何辨认终端、CMD 与 PowerShell 的环境变量写法、自定义目录、常见问题和生产模式请查看[完整快速启动指南](docs/quick-start.md#中文快速启动)。
 
 ## 会扫描哪些目录？
 

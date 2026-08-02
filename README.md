@@ -30,9 +30,11 @@ As your Skill collection grows, remembering every Skill's purpose, trigger rules
 
 Requirements: Windows 10/11, Node.js 20 or newer, and npm.
 
-```powershell
+The following commands work in both PowerShell and Command Prompt (CMD):
+
+```text
 git clone https://github.com/NaCr05/skill-atlas.git
-Set-Location skill-atlas
+cd skill-atlas
 npm ci
 npm run dev
 ```
@@ -44,7 +46,7 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000), then:
 3. Open a result, review its rules, and select **Copy invocation Prompt**.
 4. Paste the Prompt into Codex and add the details of your task.
 
-For custom paths, troubleshooting, and production mode, see the [complete quick-start guide](docs/quick-start.md).
+For terminal identification, CMD and PowerShell environment-variable syntax, troubleshooting, and production mode, see the [complete quick-start guide](docs/quick-start.md).
 
 ## What it scans
 
