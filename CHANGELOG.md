@@ -1,8 +1,10 @@
 # Changelog
 
-Notable changes to Skill Atlas will be documented in this file. The project follows [Semantic Versioning](https://semver.org/) once public releases begin.
+Notable changes to Skill Atlas will be documented in this file. The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-08-02
 
 ### Added
 
@@ -13,3 +15,6 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 - Review-before-install workflow for GitHub-hosted Skills.
 - Optional SkillsMP, skills.sh, GitHub, and OpenAI integrations with graceful fallback.
 - Bilingual project documentation and GitHub community health files for the first public preview.
+
+[Unreleased]: https://github.com/NaCr05/skill-atlas/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/NaCr05/skill-atlas/releases/tag/v0.1.0
