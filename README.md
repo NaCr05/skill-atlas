@@ -28,25 +28,37 @@ As your Skill collection grows, remembering every Skill's purpose, trigger rules
 
 ## Quick start
 
-Requirements: Windows 10/11, Node.js 20 or newer, and npm.
+Requirements: Windows 10/11 and Node.js 20 or newer (npm is included).
 
-The following commands work in both PowerShell and Command Prompt (CMD):
+Clone the project, enter its directory, and use the launcher for your terminal.
 
 ```text
 git clone https://github.com/NaCr05/skill-atlas.git
 cd skill-atlas
-npm ci
-npm run dev
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000), then:
+Command Prompt (CMD):
+
+```bat
+start-skill-atlas.cmd
+```
+
+PowerShell:
+
+```powershell
+.\start-skill-atlas.ps1
+```
+
+The launcher checks the project directory, Node.js, npm, dependencies, and local port. If dependencies are missing, run the exact repair command it prints (`npm ci` or `npm.cmd ci`) and launch again. It automatically selects a free port and opens the browser when the server is ready.
+
+Then:
 
 1. Select **Rescan** to read the current local inventory.
 2. Describe a task or search for a Skill.
 3. Open a result, review its rules, and select **Copy invocation Prompt**.
 4. Paste the Prompt into Codex and add the details of your task.
 
-For terminal identification, CMD and PowerShell environment-variable syntax, troubleshooting, and production mode, see the [complete quick-start guide](docs/quick-start.md).
+For terminal identification, missing-Node repair, PowerShell execution policy, manual startup, diagnostics, and production mode, see the [complete quick-start guide](docs/quick-start.md).
 
 ## What it scans
 

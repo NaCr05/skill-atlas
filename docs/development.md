@@ -19,11 +19,15 @@ The project requires Next.js 16 conventions. Route and page `params` are promise
 | `src/core/marketplaces` | External discovery adapters |
 | `src/core/installer` | Review, confirmation, download, and verification |
 | `src/core/security` | Local request guard |
+| `src/core/environment` | Read-only runtime and filesystem readiness diagnostics |
 | `tests/fixtures` | Deterministic Codex home used by browser tests |
 | `tests/unit` | Pure parsing, path, Prompt, provider, and request behavior |
 | `tests/integration` | Inventory and installation workflows |
 | `tests/e2e` | Browser-critical user journeys |
 | `scripts/screenshots` | Fixture-only public screenshot capture |
+| `scripts/startup` | Shared Windows launcher preflight, port selection, server start, and browser opening |
+
+The root `start-skill-atlas.cmd` and `start-skill-atlas.ps1` files are deliberately thin wrappers. Keep startup rules in `scripts/startup/launcher.mjs` so the two entry points cannot drift. The Settings page uses the separate runtime-oriented `src/core/environment/diagnostics.ts` interface because an already-running server has different port semantics from a preflight launcher.
 
 ## Change rules
 

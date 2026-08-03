@@ -6,6 +6,8 @@ Skill Atlas is one local Next.js process and one browser session. It has no data
 
 ```mermaid
 flowchart LR
+  Launcher["CMD or PowerShell launcher"] --> Preflight["project + Node + npm + dependencies + port"]
+  Preflight --> UI
   Browser["Browser on 127.0.0.1"] --> UI["Next.js UI"]
   UI --> LocalState["browser localStorage · preferences + local metrics"]
   UI --> Scan["Discovery + classification"]
@@ -30,8 +32,16 @@ flowchart LR
 - `src/core/marketplaces`: normalizes external provider responses into one UI contract and returns explicit unavailable states.
 - `src/core/installer`: parses GitHub sources, reviews repository trees, maintains short-lived in-memory plans, stages downloads, verifies `SKILL.md`, and atomically renames the staged directory.
 - `src/core/security`: rejects mutating requests with non-local Host or Origin values.
+- `src/core/environment`: inspects the running source tree, Node/npm, dependencies, Codex home, and personal Skills directory without mutating them.
 - `src/app/api`: thin validated route handlers. Business rules stay in `src/core` for direct tests.
 - `src/components`: interface surfaces and confirmation checkpoints.
+- `scripts/startup/launcher.mjs`: owns Windows preflight, bounded free-port selection, server startup, readiness polling, and browser opening for both root launcher files.
+
+## Startup model
+
+The `.cmd` and `.ps1` files only locate their own project directory, detect the special case where Node.js is entirely absent, and delegate to one launcher module. The launcher never installs software implicitly. A missing prerequisite blocks startup and prints exact CMD and PowerShell repair commands. An occupied preferred port is not a failure: the launcher searches the next ten ports, starts on the first free one, waits for an HTTP response, and then opens the browser.
+
+The Settings page reports the state of the already-running process. Its local-service check therefore reports the active bind address rather than treating that port as unexpectedly occupied. This separation avoids contradictory health results.
 
 ## Inventory model
 

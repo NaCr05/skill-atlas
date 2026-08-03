@@ -28,25 +28,37 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 
 ## 快速启动
 
-环境要求：Windows 10/11、Node.js 20 或更高版本，以及 npm。
+环境要求：Windows 10/11、Node.js 20 或更高版本（安装 Node.js 时会包含 npm）。
 
-下面这组命令可以同时用于 PowerShell 和命令提示符（CMD）：
+先克隆项目并进入目录：
 
 ```text
 git clone https://github.com/NaCr05/skill-atlas.git
 cd skill-atlas
-npm ci
-npm run dev
 ```
 
-打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)，然后：
+命令提示符（CMD）运行：
+
+```bat
+start-skill-atlas.cmd
+```
+
+PowerShell 运行：
+
+```powershell
+.\start-skill-atlas.ps1
+```
+
+启动器会自动检查项目目录、Node.js、npm、项目依赖和本地端口。如果首次启动缺少依赖，请复制它显示的修复命令（`npm ci` 或 `npm.cmd ci`）执行一次，再重新启动。服务就绪后会自动选择可用端口并打开浏览器。
+
+然后：
 
 1. 点击**重新扫描**，读取当前电脑上的 Skill 清单。
 2. 描述你要完成的任务，或直接搜索某个 Skill。
 3. 打开结果，确认调用规则，然后点击**复制调用 Prompt**。
 4. 把 Prompt 粘贴到 Codex，再补充你的具体任务信息。
 
-如何辨认终端、CMD 与 PowerShell 的环境变量写法、自定义目录、常见问题和生产模式请查看[完整快速启动指南](docs/quick-start.md#中文快速启动)。
+如何辨认终端、修复 Node 缺失、处理 PowerShell 执行策略、手动启动、环境体检和生产模式，请查看[完整快速启动指南](docs/quick-start.md#中文快速启动)。
 
 ## 会扫描哪些目录？
 

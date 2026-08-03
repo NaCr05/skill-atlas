@@ -1,6 +1,6 @@
 {
   "name": "skill-atlas",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A Windows-first local control panel for discovering, understanding, and safely using Codex Skills.",
   "license": "MIT",
@@ -19,6 +19,7 @@
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start -H 127.0.0.1",
+    "doctor": "node scripts/startup/launcher.mjs --check --no-browser",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

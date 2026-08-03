@@ -26,26 +26,57 @@ npm --version
 
 The basic startup commands below intentionally work in both shells.
 
-## 2. Download and start Skill Atlas
+## 2. Download Skill Atlas
 
 Run these commands in either PowerShell or CMD:
 
 ```text
 git clone https://github.com/NaCr05/skill-atlas.git
 cd skill-atlas
-npm ci
-npm run dev
 ```
 
-Before running `npm ci`, confirm that the prompt ends in `skill-atlas`, for example:
+Confirm that the prompt now ends in `skill-atlas`, for example:
 
 ```text
 C:\Users\name\skill-atlas>
 ```
 
-Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Keep the terminal window open while using the app. Press `Ctrl+C` there when you want to stop it.
+## 3. Start with the launcher
 
-## 3. Complete the first workflow
+Command Prompt (CMD):
+
+```bat
+start-skill-atlas.cmd
+```
+
+PowerShell:
+
+```powershell
+.\start-skill-atlas.ps1
+```
+
+The launcher checks that it is in the right project, verifies Node.js 20+, npm, and installed dependencies, then finds an available port from 3000 through 3010. It opens the browser only after the local server responds. Keep the terminal open while using the app and press `Ctrl+C` to stop it.
+
+On a fresh clone, the dependency check will normally print this repair command and stop:
+
+```text
+CMD> npm ci
+PowerShell> npm.cmd ci
+```
+
+Run the command for your shell once, then run the launcher again. The preflight can also be run without starting the site:
+
+```text
+start-skill-atlas.cmd --check
+```
+
+```powershell
+.\start-skill-atlas.ps1 --check
+```
+
+To select a specific port, append `--port 3200`. Append `--no-browser` if you do not want the browser to open automatically.
+
+## 4. Complete the first workflow
 
 1. Select **Rescan** to refresh the inventory from disk.
 2. Enter a task such as “Review the accessibility of my React dashboard.”
@@ -54,6 +85,19 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000). Keep the terminal window op
 5. Paste the Prompt into Codex and replace the placeholders with your project details.
 
 You can favorite or pin useful Skills, add local notes, and switch between Chinese and English. Skill names remain unchanged in both languages.
+
+Open **Environment settings** to see the read-only health check for the source tree, runtime, dependencies, active local service, Codex home, and personal Skills directory. Items that need action include commands for CMD and PowerShell.
+
+## Manual fallback
+
+If you prefer to start without the launcher, these commands work in either shell:
+
+```text
+npm ci
+npm run dev
+```
+
+Then open the address printed by Next.js, normally [http://127.0.0.1:3000](http://127.0.0.1:3000).
 
 ## Custom Codex location
 
@@ -131,17 +175,29 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
+If PowerShell blocks `start-skill-atlas.ps1` itself, use the CMD launcher or run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start-skill-atlas.ps1
+```
+
+### Node.js is not installed
+
+Both launchers print this copyable command:
+
+```text
+winget install OpenJS.NodeJS.LTS
+```
+
+After installation, close and reopen the terminal before launching again.
+
 ### The page shows no personal Skills
 
 Confirm that the Skill folders contain `SKILL.md` files under `%USERPROFILE%\.codex\skills`, or under the absolute directory configured by `CODEX_HOME`. Then select **Rescan**.
 
 ### Port 3000 is already in use
 
-```text
-npm run dev -- -p 3001
-```
-
-Then open `http://127.0.0.1:3001`.
+The launcher automatically checks 3001 through 3010, selects the first available port, and opens the matching address. For manual startup, use `npm run dev -- -p 3001`.
 
 ### Marketplace or AI enhancement is unavailable
 
@@ -181,26 +237,57 @@ npm --version
 
 下面的基础启动命令经过有意选择，可以同时用于这两种终端。
 
-## 2. 下载并启动 Skill Atlas
+## 2. 下载 Skill Atlas
 
 在 PowerShell 或 CMD 中运行：
 
 ```text
 git clone https://github.com/NaCr05/skill-atlas.git
 cd skill-atlas
-npm ci
-npm run dev
 ```
 
-执行 `npm ci` 前，请确认提示符已经进入 `skill-atlas` 目录，例如：
+请确认提示符已经进入 `skill-atlas` 目录，例如：
 
 ```text
 C:\Users\用户名\skill-atlas>
 ```
 
-打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。使用网站期间请保持终端窗口开启；需要停止时，在该窗口按 `Ctrl+C`。
+## 3. 使用启动器
 
-## 3. 完成第一次使用
+命令提示符（CMD）：
+
+```bat
+start-skill-atlas.cmd
+```
+
+PowerShell：
+
+```powershell
+.\start-skill-atlas.ps1
+```
+
+启动器会确认项目目录，检查 Node.js 20+、npm 和依赖，并在 3000 到 3010 中寻找可用端口。只有本地服务真正响应后，它才会自动打开浏览器。使用期间请保持终端窗口开启；需要停止时按 `Ctrl+C`。
+
+刚克隆的项目通常还没有依赖，启动器会显示下面的修复命令并停止：
+
+```text
+CMD> npm ci
+PowerShell> npm.cmd ci
+```
+
+按当前终端复制执行一次，再重新运行启动器。也可以只体检、不启动网站：
+
+```text
+start-skill-atlas.cmd --check
+```
+
+```powershell
+.\start-skill-atlas.ps1 --check
+```
+
+需要指定端口时追加 `--port 3200`；不想自动打开浏览器时追加 `--no-browser`。
+
+## 4. 完成第一次使用
 
 1. 点击**重新扫描**，从磁盘刷新 Skill 清单。
 2. 输入一个任务，例如“检查我的 React 控制面板是否符合无障碍要求”。
@@ -209,6 +296,19 @@ C:\Users\用户名\skill-atlas>
 5. 把 Prompt 粘贴到 Codex，并用你的项目实际信息替换占位内容。
 
 你还可以收藏或置顶常用 Skill、添加本地备注，并切换中文或英文。无论界面语言如何切换，Skill 名称都会保持原样。
+
+打开**环境设置**可以查看只读的“环境体检”：源码、运行时、依赖、当前本地服务、Codex 主目录和个人 Skills 目录会分别标记为“可用”或“需配置”，并为问题项提供 CMD 与 PowerShell 修复命令。
+
+## 手动启动备用方案
+
+如果不想使用启动器，下面的命令在两种终端中都可用：
+
+```text
+npm ci
+npm run dev
+```
+
+然后打开 Next.js 输出的地址，通常是 [http://127.0.0.1:3000](http://127.0.0.1:3000)。
 
 ## 自定义 Codex 目录
 
@@ -286,17 +386,29 @@ npm.cmd ci
 npm.cmd run dev
 ```
 
+如果 PowerShell 阻止 `start-skill-atlas.ps1` 本身，可以改用 CMD 启动器，或运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\start-skill-atlas.ps1
+```
+
+### 没有安装 Node.js
+
+两个启动器都会显示这条可复制的修复命令：
+
+```text
+winget install OpenJS.NodeJS.LTS
+```
+
+安装结束后，请关闭并重新打开终端，再次启动。
+
 ### 页面没有显示个人 Skill
 
 确认 `%USERPROFILE%\.codex\skills` 中的 Skill 文件夹包含 `SKILL.md`；如果设置了 `CODEX_HOME`，则检查对应绝对目录。确认后点击**重新扫描**。
 
 ### 3000 端口已被占用
 
-```text
-npm run dev -- -p 3001
-```
-
-然后打开 `http://127.0.0.1:3001`。
+启动器会自动继续检查 3001 到 3010，选择第一个可用端口并打开正确地址。手动启动时可以使用 `npm run dev -- -p 3001`。
 
 ### Skill 市场或 AI 增强不可用
 

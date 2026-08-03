@@ -20,6 +20,8 @@ Additional isolated fixtures verify that only the active plugin version is inclu
 
 Unit tests also cover Chinese and English Prompt selection, bilingual task recommendation, no-match behavior, corrupted local-state recovery, zero-result deduplication, bounded local persistence, and median copy-journey calculation.
 
+Startup coverage verifies launcher option parsing, missing-dependency repair commands, Windows browser command construction, and fallback from an occupied preferred port. Windows integration tests execute both root launchers from a different working directory and simulate a PATH without Node.js to verify the copyable installation command. Runtime-diagnostic unit tests ensure ready and action-needed states remain distinct and read-only.
+
 ## Security and installation coverage
 
 The GitHub API is mocked at the core boundary. The integration test performs the complete review and confirmation flow, writes a nested asset and script into a temporary Codex home, verifies their bytes, and then removes only the temporary test directory. Separate cases block traversal and an existing target.
@@ -32,7 +34,7 @@ An integration test creates 500 minimal Skill directories and requires `discover
 
 ## Browser coverage
 
-Playwright runs against `127.0.0.1:3178` with `CODEX_HOME` set to the fixture. It covers inventory visibility, structure/environment labels, manual rescanning, task recommendation, zero-result metrics, favorites, pins, notes, recent copies, Chinese Prompt composition, local-state persistence, detail navigation, skills.sh's credential-free degraded state, and a 390 px viewport overflow check.
+Playwright runs against `127.0.0.1:3178` with `CODEX_HOME` set to the fixture. It covers inventory visibility, structure/environment labels, manual rescanning, task recommendation, zero-result metrics, favorites, pins, notes, recent copies, Chinese Prompt composition, local-state persistence, detail navigation, the Settings environment health check, skills.sh's credential-free degraded state, and a 390 px viewport overflow check.
 
 The `pretest:e2e` hook creates a production build before Playwright starts the localhost server. This avoids Windows development-worker behavior and validates the actual production route bundle.
 

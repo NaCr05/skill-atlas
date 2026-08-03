@@ -95,6 +95,17 @@ test("market adapters degrade without blocking safe review entry", async ({ page
   await expect(page.getByRole("link", { name: /打开 skills.sh/ })).toBeVisible();
 });
 
+test("settings explains environment readiness and repair paths", async ({ page }) => {
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "环境体检" })).toBeVisible();
+  await expect(page.getByText("项目目录", { exact: true })).toBeVisible();
+  await expect(page.getByText("Node.js 运行时", { exact: true })).toBeVisible();
+  await expect(page.getByText("npm 包管理器", { exact: true })).toBeVisible();
+  await expect(page.getByText("个人 Skills 目录", { exact: true })).toBeVisible();
+  await expect(page.getByText("启动前完整检查", { exact: true })).toBeVisible();
+  await expect(page.getByText("start-skill-atlas.cmd --check", { exact: true })).toBeVisible();
+});
+
 test("mobile layout has no horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
