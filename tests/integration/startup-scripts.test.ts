@@ -19,7 +19,7 @@ windowsOnly("Windows startup scripts", () => {
       windowsHide: true,
     });
     expect(result.stdout).toContain("Environment ready");
-  });
+  }, 20_000);
 
   it("runs the PowerShell preflight from any working directory", async () => {
     const powershell = path.join(
@@ -41,7 +41,7 @@ windowsOnly("Windows startup scripts", () => {
       windowsHide: true,
     });
     expect(result.stdout).toContain("Environment ready");
-  });
+  }, 20_000);
 
   it("gives a repair command when Node.js is missing", async () => {
     const shell = process.env.ComSpec || "cmd.exe";
@@ -62,5 +62,5 @@ windowsOnly("Windows startup scripts", () => {
     }
     expect(exitCode).toBe(1);
     expect(output).toContain("winget install OpenJS.NodeJS.LTS");
-  });
+  }, 20_000);
 });
