@@ -52,7 +52,8 @@ export function inferSkillRelationships(skills: SkillRecord[]): Map<string, Skil
   const result = new Map<string, SkillRelationship[]>();
 
   for (const skill of skills) {
-    const explicit = new Set(skill.dependencies.map((value) => value.toLocaleLowerCase()));
+    const dependencies = new Set(skill.dependencies.map((value) => value.toLocaleLowerCase()));
+    const references = new Set(skill.referencedSkills.map((value) => value.toLocaleLowerCase()));
     const skillTags = new Set(skill.tags.map((value) => value.toLocaleLowerCase()));
     const skillTools = new Set(skill.requiredTools.map((value) => value.toLocaleLowerCase()));
     const ownNames = names.get(skill.id) || new Set<string>();
@@ -63,7 +64,8 @@ export function inferSkillRelationships(skills: SkillRecord[]): Map<string, Skil
       .map((candidate) => {
         const candidateNames = names.get(candidate.id) || new Set<string>();
         const candidatePurposes = purposes.get(candidate.id) || new Set<string>();
-        const isExplicit = explicit.has(candidate.name.toLocaleLowerCase());
+        const isDependency = dependencies.has(candidate.name.toLocaleLowerCase());
+        const isReference = references.has(candidate.name.toLocaleLowerCase());
         const sharedTags = intersection(candidate.tags.map((value) => value.toLocaleLowerCase()), skillTags);
         const sharedTools = intersection(candidate.requiredTools.map((value) => value.toLocaleLowerCase()), skillTools);
         const sharedNameThemes = intersection(ownNames, candidateNames)
@@ -80,14 +82,15 @@ export function inferSkillRelationships(skills: SkillRecord[]): Map<string, Skil
 
         const hasCrossPurpose = (crossNameThemes.length >= 2 && sharedPurpose.length >= 2)
           || (crossNameThemes.length >= 1 && sharedPurpose.length >= 3);
-        const score = (isExplicit ? 1_000 : 0)
+        const score = (isDependency ? 1_000 : isReference ? 900 : 0)
           + sharedTags.length * 100
           + sharedTools.length * 80
           + sharedNameThemes.length * 60
           + (hasCrossPurpose ? crossNameThemes.length * 30 + sharedPurpose.length * 4 : 0);
 
         let reason = "";
-        if (isExplicit) reason = "技能正文或元数据中明确引用";
+        if (isDependency) reason = "声明为必需 Skill 依赖";
+        else if (isReference) reason = "Skill 说明中引用";
         else if (sharedTags.length) reason = `共同标签：${sharedTags.slice(0, 3).join("、")}`;
         else if (sharedTools.length) reason = `共同工具：${sharedTools.slice(0, 3).join("、")}`;
         else if (sharedNameThemes.length) reason = `共同主题：${sharedNameThemes.slice(0, 3).join("、")}`;

@@ -1,43 +1,13 @@
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { SkillAtlasError } from "@/core/errors/skill-atlas-error";
+import { fetchGithubBlob } from "@/core/github/skill-source";
+import { snapshotLocalSkill } from "@/core/lifecycle/fingerprint";
+import { recordTrackedSource, skillDirectoryKey } from "@/core/lifecycle/source-registry";
 import { isPathInside, resolvePersonalSkillsRoot } from "../skills/paths";
 import { installationPlans, validateRelativePath } from "./inspect-source";
-import type { GitTreeEntry, InstallationResult } from "./types";
-
-function githubHeaders(env: Readonly<Partial<NodeJS.ProcessEnv>>): HeadersInit {
-  const token = env.GITHUB_TOKEN?.trim();
-  return {
-    Accept: "application/vnd.github+json",
-    "User-Agent": "codex-skill-dashboard-local",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-async function fetchBlob(
-  entry: GitTreeEntry,
-  env: Readonly<Partial<NodeJS.ProcessEnv>>,
-  fetcher: typeof fetch,
-): Promise<Buffer> {
-  if (!entry.url.startsWith("https://api.github.com/repos/")) {
-    throw new Error("GitHub 返回了不受信任的文件地址。");
-  }
-  const response = await fetcher(entry.url, {
-    headers: githubHeaders(env),
-    cache: "no-store",
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!response.ok) throw new Error(`文件下载失败（HTTP ${response.status}）：${entry.path}`);
-  const payload = (await response.json()) as { content?: string; encoding?: string };
-  if (!payload.content || payload.encoding !== "base64") {
-    throw new Error(`GitHub 文件内容格式异常：${entry.path}`);
-  }
-  const data = Buffer.from(payload.content.replaceAll("\n", ""), "base64");
-  if (entry.size !== undefined && data.byteLength !== entry.size) {
-    throw new Error(`文件大小校验失败：${entry.path}`);
-  }
-  return data;
-}
+import type { InstallationResult } from "./types";
 
 async function exists(target: string): Promise<boolean> {
   try {
@@ -57,24 +27,22 @@ export async function confirmInstallation(
     now?: Date;
   },
 ): Promise<InstallationResult> {
-  const plan = installationPlans.get(planId);
-  if (!plan) throw new Error("安装审查单不存在或已被使用，请重新审查。" );
-  installationPlans.delete(planId);
-  if (!plan.installAllowed) throw new Error("此安装审查包含阻断风险。" );
   const now = options?.now || new Date();
-  if (new Date(plan.expiresAt).getTime() < now.getTime()) {
-    throw new Error("安装审查已过期，请重新检查源文件。" );
-  }
+  const consumed = installationPlans.consume(planId, now);
+  if (consumed.status === "missing") throw new SkillAtlasError("INSTALL_PLAN_MISSING");
+  if (consumed.status === "expired") throw new SkillAtlasError("INSTALL_PLAN_EXPIRED");
+  const plan = consumed.plan;
+  if (!plan.installAllowed) throw new SkillAtlasError("INSTALL_BLOCKED");
 
   const env = options?.env || process.env;
   const fetcher = options?.fetcher || fetch;
   const skillsRoot = resolvePersonalSkillsRoot(env, options?.homeDirectory);
   const targetDirectory = path.resolve(plan.targetDirectory);
   if (!isPathInside(skillsRoot, targetDirectory)) {
-    throw new Error("目标目录不在当前 CODEX_HOME/skills 内。" );
+    throw new SkillAtlasError("INSTALL_STATE_CHANGED");
   }
   if (await exists(targetDirectory)) {
-    throw new Error("目标目录在确认后被创建，已停止安装以避免覆盖。" );
+    throw new SkillAtlasError("INSTALL_STATE_CHANGED");
   }
   await mkdir(skillsRoot, { recursive: true });
   const stagingDirectory = path.join(skillsRoot, `.install-${plan.planId}`);
@@ -89,13 +57,17 @@ export async function confirmInstallation(
       if (!isPathInside(stagingDirectory, destination)) {
         throw new Error(`文件路径越过暂存目录：${entry.path}`);
       }
-      const data = await fetchBlob(entry, env, fetcher);
+      const data = await fetchGithubBlob(entry, { env, fetcher });
       await mkdir(path.dirname(destination), { recursive: true });
       await writeFile(destination, data, { flag: "wx" });
     }
     const installedSkill = path.join(stagingDirectory, "SKILL.md");
     const skillContents = await readFile(installedSkill, "utf8");
     if (!skillContents.trim()) throw new Error("下载后的 SKILL.md 为空。" );
+    const stagedSnapshot = await snapshotLocalSkill(stagingDirectory, { maxFiles: 500 });
+    if (!stagedSnapshot.fingerprint.complete || stagedSnapshot.fingerprint.value !== plan.fingerprint.value) {
+      throw new Error("下载后的文件指纹与安装审查不一致。" );
+    }
     await rename(stagingDirectory, targetDirectory);
   } catch (error) {
     if (isPathInside(skillsRoot, stagingDirectory)) {
@@ -104,11 +76,31 @@ export async function confirmInstallation(
     throw error;
   }
 
+  let sourceTracking: InstallationResult["sourceTracking"] = "recorded";
+  try {
+    await recordTrackedSource({
+      skillDirectory: skillDirectoryKey(targetDirectory, { env, homeDirectory: options?.homeDirectory }),
+      sourceUrl: plan.sourceUrl,
+      repository: plan.repository,
+      ref: plan.ref,
+      sourceDirectory: plan.sourceDirectory,
+      revision: plan.revision,
+      upstreamFingerprint: plan.fingerprint.value,
+      localFingerprint: plan.fingerprint.value,
+      trackedAt: now.toISOString(),
+      sourceTrust: plan.sourceTrust,
+      policyStatus: plan.sourcePolicy.blocked ? "blocked" : plan.sourcePolicy.trusted ? "trusted" : "unlisted",
+    }, { env, homeDirectory: options?.homeDirectory });
+  } catch {
+    sourceTracking = "failed";
+  }
+
   return {
     skillName: plan.skillName,
     targetDirectory,
     fileCount: plan.files.length,
     totalBytes: plan.totalBytes,
     verifiedFiles: plan.files.map((file) => file.path),
+    sourceTracking,
   };
 }

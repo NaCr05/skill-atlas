@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { recordPromptCopy } from "@/core/local-workspace";
 import { createInvocationPrompt, type PromptResult } from "@/core/skills/prompt";
-import type { SkillRecord } from "@/core/skills/types";
+import type { SkillSummary } from "@/core/skills/types";
+import { AccessibleDialog } from "./accessible-dialog";
 import { useLanguage } from "./language-provider";
 import { ProvenanceLabel } from "./provenance-label";
 
@@ -14,7 +15,7 @@ export function PromptDialog({
   onClose,
   journeyStartedAt,
 }: {
-  skill: SkillRecord;
+  skill: SkillSummary;
   onClose: () => void;
   journeyStartedAt?: number;
 }) {
@@ -42,7 +43,7 @@ export function PromptDialog({
     try {
       const response = await fetch("/api/prompt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Skill-Atlas-Language": language },
         body: JSON.stringify({ skillId: skill.id, task, enhanceWithAi: enhance, language }),
       });
       const payload = (await response.json()) as PromptResult & { error?: string };
@@ -74,20 +75,19 @@ export function PromptDialog({
   }
 
   return (
-    <div className="dialog-backdrop" role="presentation" onMouseDown={onClose}>
-      <section
-        className="prompt-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="prompt-title"
-        onMouseDown={(event) => event.stopPropagation()}
-      >
+    <AccessibleDialog
+      className="prompt-dialog"
+      labelledBy="prompt-title"
+      onClose={onClose}
+      initialFocusSelector="#task-context"
+      busy={working}
+    >
         <div className="dialog-heading">
           <div>
             <span className="eyebrow">{t("调用提示词生成器", "INVOCATION BUILDER")}</span>
             <h2 id="prompt-title">{t("调用", "Invoke")} {skill.displayName}</h2>
           </div>
-          <button className="icon-button" onClick={onClose} aria-label={t("关闭", "Close")}>
+          <button className="icon-button" type="button" onClick={onClose} aria-label={t("关闭", "Close")}>
             <X size={20} />
           </button>
         </div>
@@ -112,7 +112,7 @@ export function PromptDialog({
           />
           <span>
             <strong>{t("使用 AI 个性化增强", "Use AI personalization")}</strong>
-            <small>{t("可选；未配置 API 时会自动退回本地模板", "Optional; falls back to the local template when no API is configured")}</small>
+            <small>{t("可选；未配置或请求失败时会保留本地模板", "Optional; keeps the local template when unconfigured or a request fails")}</small>
           </span>
           <Sparkles size={18} aria-hidden="true" />
         </label>
@@ -134,7 +134,6 @@ export function PromptDialog({
             {copied ? t("已复制，可前往 Codex", "Copied — continue in Codex") : t("复制调用提示词", "Copy invocation Prompt")}
           </button>
         </div>
-      </section>
-    </div>
+    </AccessibleDialog>
   );
 }

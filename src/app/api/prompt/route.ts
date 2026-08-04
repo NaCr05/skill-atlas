@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { apiErrorResponse, localizedErrorMessage } from "@/core/errors/skill-atlas-error";
+import { loadRuntimeAiSettings } from "@/core/ai/runtime-config";
 import { assertLocalMutationRequest } from "@/core/security/local-request";
 import { findSkillById } from "@/core/skills/discover";
 import { createInvocationPrompt, enhanceInvocationPrompt } from "@/core/skills/prompt";
@@ -18,14 +20,15 @@ export async function POST(request: Request) {
     assertLocalMutationRequest(request);
     const input = inputSchema.parse(await request.json());
     const skill = await findSkillById(input.skillId);
-    if (!skill) return Response.json({ error: input.language === "zh" ? "未找到该技能。" : "Skill not found." }, { status: 404 });
+    if (!skill) return Response.json({ code: "SKILL_NOT_FOUND", error: localizedErrorMessage("SKILL_NOT_FOUND", input.language) }, { status: 404 });
     const base = createInvocationPrompt(skill, input.task, input.language);
-    const result = input.enhanceWithAi
-      ? await enhanceInvocationPrompt(base, skill, fetch, process.env, input.language)
-      : base;
+    let result = base;
+    if (input.enhanceWithAi) {
+      const { config } = await loadRuntimeAiSettings();
+      result = await enhanceInvocationPrompt(base, skill, fetch, process.env, input.language, config);
+    }
     return Response.json(result, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "提示词生成失败。";
-    return Response.json({ error: message }, { status: 400 });
+    return apiErrorResponse(request, error, "PROMPT_FAILED");
   }
 }

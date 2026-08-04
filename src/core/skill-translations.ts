@@ -46,6 +46,7 @@ const DESCRIPTION_ZH: Record<string, string> = {
   "review-agent": "对指定代码更改执行只读、缺陷优先的审查，并返回所有可操作问题。适用于其他智能体委托审查未提交更改、相对基础分支的差异、某个提交或自定义审查要求。",
   "gh-address-comments": "处理 GitHub 拉取请求中可操作的评审反馈。先检查未解决的评审线程、修改请求或行内评论，再实施选定修复；使用 GitHub 应用读取元数据和普通评论，需要线程状态、解决状态或行内上下文时通过 `gh` 运行随附的 GraphQL 脚本。",
   "artifact-template-sales-pipeline": "使用 Sales Pipeline 模板及其保留的参考文件创建电子表格。当用户选择或点名该 Skill 时使用；跟踪销售机会、阶段、负责人、交易金额、概率、预测、下一步和风险。",
+  "shutaai-extract-pdf": "从薯塔 AI 课程文件夹和当前 Chrome 标签页中的 PDF 查看器页面提取、重命名并验证原始高清课程 PDF。适用于用户要求下载、保存、导出、批量提取或复用课程资料，以及规范来自 shutaai.com 的课程文件名。",
   "artifact-template-simple-dark-mode": "使用 Simple Dark Mode 模板及其保留的参考文件创建演示文稿。当用户选择或点名该 Skill 时使用；通过醒目字体、简洁章节、图表和图像制作清爽的深色演示。",
   "artifact-template-simple-light-mode": "使用 Simple Light Mode 模板及其保留的参考文件创建演示文稿。当用户选择或点名该 Skill 时使用；通过宽松排版、简洁章节、图表和图像制作清爽的浅色演示。",
   "sites-building": "使用 Sites 构建网站，包括落地页、作品集、仪表盘、门户、跟踪器、信息中心和内部工具。当项目包含 `.openai/hosting.json` 时必须使用 Sites。",
@@ -61,6 +62,7 @@ const DESCRIPTION_ZH: Record<string, string> = {
   "to-tickets": "把计划、规格说明或当前对话拆分成一组贯穿式任务单，每个任务单都声明阻塞关系。可在本地为每个任务单生成一个文件并以文字记录依赖，也可在真实任务跟踪器中建立原生阻塞链接。",
   "ui-ux-pro-max": "面向网页和移动端的 UI/UX 设计知识库，包含风格、配色、字体搭配、产品类型、体验准则、图标、动效预设和图表类型，并覆盖 React、Next.js、Vue、Svelte、Flutter、SwiftUI、Tailwind 等多种技术栈。适用于设计、构建或审查页面、组件、配色、排版、布局、无障碍、动画和数据可视化。",
   "visualize": "直接在对话中创建可视化和交互工具。适用于展示工作原理、制作模拟器或实验室、地图、图表、对比、界面模型、场景和可调参数，以及超出普通文字说明的交互探索。",
+  "wayfinder": "把单次智能体会话无法容纳的大型工作，规划为问题跟踪器上的共享决策任务地图；逐项解决其中的决策问题，直到通往目标的路径清晰。该技能默认负责规划路线，而不是直接执行最终工作。",
   "web-design-guidelines": "依据 Vercel Web Interface Guidelines 审查网页界面代码。适用于设计审计、体验评审、无障碍检查、设计清单、产品界面标准，以及布局、字体、颜色、动效、交互、响应式和前端实现质量审查。",
 };
 
@@ -93,16 +95,119 @@ const TAG_ZH: Record<string, string> = {
   web: "网页",
 };
 
+function isPredominantlyChinese(text: string): boolean {
+  const hanCount = text.match(/\p{Script=Han}/gu)?.length ?? 0;
+  const latinCount = text.match(/[A-Za-z]/g)?.length ?? 0;
+  return hanCount >= 4 && hanCount / Math.max(1, hanCount + latinCount) >= 0.18;
+}
+
+type SummaryRule = { pattern: RegExp; label: string };
+
+const SUMMARY_ACTIONS: SummaryRule[] = [
+  { pattern: /\b(?:review|reviews|audit|audits|inspect|inspects|check|checks)\b/i, label: "审查" },
+  { pattern: /\b(?:plan|plans|planning|chart|charts)\b/i, label: "规划" },
+  { pattern: /\b(?:create|creates|build|builds|generate|generates|scaffold|scaffolds)\b/i, label: "创建" },
+  { pattern: /\b(?:manage|manages|organize|organizes|maintain|maintains)\b/i, label: "管理" },
+  { pattern: /\b(?:search|searches|find|finds|discover|discovers)\b/i, label: "搜索" },
+  { pattern: /\b(?:extract|extracts|export|exports|download|downloads)\b/i, label: "提取" },
+  { pattern: /\b(?:edit|edits|transform|transforms|convert|converts)\b/i, label: "编辑和转换" },
+  { pattern: /\b(?:test|tests|validate|validates|verify|verifies)\b/i, label: "测试和验证" },
+  { pattern: /\b(?:control|controls|automate|automates)\b/i, label: "控制和自动化" },
+  { pattern: /\b(?:install|installs|update|updates|remove|removes)\b/i, label: "安装和维护" },
+  { pattern: /\b(?:analyze|analyzes|analyse|analyses|research|researches)\b/i, label: "分析" },
+  { pattern: /\b(?:write|writes|draft|drafts|document|documents)\b/i, label: "编写" },
+];
+
+const SUMMARY_SUBJECTS: SummaryRule[] = [
+  { pattern: /\bissue trackers?\b/i, label: "问题跟踪器" },
+  { pattern: /\bdecision tickets?\b/i, label: "决策任务" },
+  { pattern: /\bworkflows?\b/i, label: "工作流程" },
+  { pattern: /\bcodebases?\b|\bsource code\b/i, label: "代码库" },
+  { pattern: /\barchitectures?\b/i, label: "软件架构" },
+  { pattern: /\bwebsites?\b|\bweb pages?\b/i, label: "网站和网页" },
+  { pattern: /\bfrontends?\b|\buser interfaces?\b|\bUI\b/i, label: "前端界面" },
+  { pattern: /\bdocuments?\b|\bDOCX\b/i, label: "文档" },
+  { pattern: /\bPDFs?\b/i, label: "PDF 文件" },
+  { pattern: /\bspreadsheets?\b|\bworkbooks?\b/i, label: "电子表格" },
+  { pattern: /\bpresentations?\b|\bslide decks?\b/i, label: "演示文稿" },
+  { pattern: /\bnotebooks?\b/i, label: "Notebook" },
+  { pattern: /\bimages?\b|\bphotos?\b|\billustrations?\b/i, label: "图像" },
+  { pattern: /\bdatabases?\b|\bdata models?\b/i, label: "数据库和数据模型" },
+  { pattern: /\btests?\b|\btest suites?\b/i, label: "测试" },
+  { pattern: /\bresearch\b|\bpapers?\b/i, label: "研究资料" },
+  { pattern: /\bAPIs?\b/i, label: "API" },
+  { pattern: /\bskills?\b/i, label: "技能" },
+  { pattern: /\bagents?\b/i, label: "智能体" },
+];
+
+function matchingLabels(text: string, rules: SummaryRule[], limit: number): string[] {
+  return [...new Set(rules.filter((rule) => rule.pattern.test(text)).map((rule) => rule.label))].slice(0, limit);
+}
+
+function automaticChineseSummary(name: string, description: string): string {
+  const normalized = description.replace(/\s+/g, " ").trim();
+  const actions = matchingLabels(normalized, SUMMARY_ACTIONS, 2);
+  const subjects = matchingLabels(normalized, SUMMARY_SUBJECTS, 3);
+
+  if (!actions.length && !subjects.length) {
+    return `“${name}”技能提供与其专业领域相关的工作流程；完整技术约束仍以原始 SKILL.md 为准。`;
+  }
+
+  const actionText = actions.length ? actions.join("并") : "处理";
+  const subjectText = subjects.length ? subjects.join("、") : "相关的专门工作流程";
+  const qualifiers: string[] = [];
+  if (/\bfrom scratch\b/i.test(normalized)) qualifiers.push("支持从零开始推进");
+  if (/\bone at a time\b/i.test(normalized)) qualifiers.push("强调逐项处理");
+  if (/\b(?:when the user|use when)\b/i.test(normalized)) qualifiers.push("应结合原始说明中的触发条件使用");
+
+  return `“${name}”技能用于${actionText}${subjectText}。${qualifiers.length ? `${qualifiers.join("，")}。` : ""}`;
+}
+
+export type ChineseDescriptionKind = "source" | "catalog" | "automatic";
+
+function normalizeChineseTerminology(text: string): string {
+  return text.replace(/\bSkills?\b/g, "技能").replace(/\bPrompt\b/g, "提示词");
+}
+
+function resolveChineseDescription(
+  name: string,
+  description: string,
+  marketplace = false,
+): { text: string; kind: ChineseDescriptionKind } {
+  const catalogText = DESCRIPTION_ZH[name.toLocaleLowerCase()];
+  if (catalogText) return { text: normalizeChineseTerminology(catalogText), kind: "catalog" };
+  if (isPredominantlyChinese(description)) return { text: normalizeChineseTerminology(description), kind: "source" };
+
+  const automaticText = automaticChineseSummary(name, description);
+  return {
+    text: normalizeChineseTerminology(
+      marketplace
+        ? automaticText.replace(`“${name}”技能`, `来自市场的“${name}”技能`)
+        : automaticText,
+    ),
+    kind: "automatic",
+  };
+}
+
 export function translatedSkillDescription(skill: Pick<SkillRecord, "name" | "description">): string {
-  const translation = /\p{Script=Han}/u.test(skill.description) ? skill.description : DESCRIPTION_ZH[skill.name.toLocaleLowerCase()] ||
-    `这是一个用于 ${skill.name} 相关任务的技能。中文机器译文尚未收录，可在详情页展开查看原始说明。`;
-  return translation.replace(/\bSkills?\b/g, "技能").replace(/\bPrompt\b/g, "提示词");
+  return resolveChineseDescription(skill.name, skill.description).text;
+}
+
+export function skillDescriptionLocalizationKind(
+  skill: Pick<SkillRecord, "name" | "description">,
+): ChineseDescriptionKind {
+  return resolveChineseDescription(skill.name, skill.description).kind;
 }
 
 export function translatedMarketplaceDescription(name: string, description: string): string {
-  const translation = /\p{Script=Han}/u.test(description) ? description : DESCRIPTION_ZH[name.toLocaleLowerCase()] ||
-    `这是来自市场的 ${name} 技能。当前结果尚无可核对的中文译文，请在安装前打开来源页面查看完整说明。`;
-  return translation.replace(/\bSkills?\b/g, "技能").replace(/\bPrompt\b/g, "提示词");
+  return resolveChineseDescription(name, description, true).text;
+}
+
+export function marketplaceDescriptionLocalizationKind(
+  name: string,
+  description: string,
+): ChineseDescriptionKind {
+  return resolveChineseDescription(name, description, true).kind;
 }
 
 export function translatedUseCases(skill: Pick<SkillRecord, "name" | "description">): string[] {
@@ -144,8 +249,9 @@ export function translatedInstructionOverview(skill: SkillRecord): string {
     `用途概览：${translatedSkillDescription(skill)}`,
     `调用方式：${skill.allowImplicitInvocation ? "可根据任务自动触发，也可以使用 $" + skill.name + " 显式调用。" : "必须使用 $" + skill.name + " 显式调用。"}`,
     `技能依赖：${skill.dependencies.length ? skill.dependencies.join("、") : "未声明其他技能依赖。"}`,
+    `引用技能：${skill.referencedSkills.length ? skill.referencedSkills.join("、") : "未发现正文引用。"}`,
     `工具要求：${skill.requiredTools.length ? skill.requiredTools.join("、") : "未声明额外工具要求。"}`,
-    "译文说明：以上内容根据技能元数据和调用规则自动生成；为避免误改技术约束，完整原始说明保留在下方折叠区域。",
+    "中文说明：以上内容根据技能元数据和调用规则自动生成；为避免误改技术约束，完整原始说明保留在下方折叠区域。",
   ];
   return lines.join("\n\n");
 }

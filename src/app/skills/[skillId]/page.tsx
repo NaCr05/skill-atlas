@@ -2,14 +2,18 @@ import { ArrowLeft, ExternalLink, FileCode2, FolderOpen, GitBranch, ShieldCheck 
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { BreakablePath } from "@/components/breakable-path";
 import { DetailPrompt } from "@/components/detail-prompt";
 import { LocalizedText } from "@/components/localized-text";
 import { ProvenanceLabel } from "@/components/provenance-label";
+import { SkillUpdatePreview } from "@/components/skill-update-preview";
+import { SkillLifecycleActions } from "@/components/skill-lifecycle-actions";
 import { StatusBadge } from "@/components/status-badge";
 import { TranslationBadge } from "@/components/translation-badge";
 import { environmentStatusLabel, localizeGeneratedText, permissionLabel, sourceKindLabel, sourceLabel, statusLabel, structureStatusLabel } from "@/core/i18n";
 import {
   resourceKindLabel,
+  skillDescriptionLocalizationKind,
   translatedInstructionOverview,
   translatedRecommendations,
   translatedSkillDescription,
@@ -23,10 +27,11 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
   const { skillId } = await params;
   const skill = await findSkillById(skillId);
   if (!skill) notFound();
+  const descriptionKind = skillDescriptionLocalizationKind(skill);
 
   return (
     <main className="detail-page">
-      <Link className="back-link" href="/"><ArrowLeft size={16} /> <LocalizedText zh="返回能力清单" en="Back to Skill inventory" /></Link>
+      <Link className="back-link" href="/skills"><ArrowLeft size={16} /> <LocalizedText zh="返回能力清单" en="Back to Skill inventory" /></Link>
       <header className="detail-hero" data-source={skill.source.kind}>
         <span className="source-spine" aria-hidden="true" />
         <div className="detail-title">
@@ -34,7 +39,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
           <h1>{skill.displayName}</h1>
           <code>${skill.name}</code>
           <p><LocalizedText zh={translatedSkillDescription(skill)} en={skill.description} /></p>
-          {!/\p{Script=Han}/u.test(skill.description) && <TranslationBadge />}
+          {descriptionKind !== "source" && <TranslationBadge kind={descriptionKind} />}
           <ProvenanceLabel kind="source" />
         </div>
         <aside>
@@ -52,7 +57,8 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
               <div><span><LocalizedText zh="调用状态" en="Invocation status" /></span><strong><LocalizedText zh={statusLabel(skill.status, "zh")} en={statusLabel(skill.status, "en")} /></strong></div>
               <div><span><LocalizedText zh="结构" en="Structure" /></span><strong><LocalizedText zh={structureStatusLabel(skill.structureStatus, "zh")} en={structureStatusLabel(skill.structureStatus, "en")} /></strong></div>
               <div><span><LocalizedText zh="环境" en="Environment" /></span><strong><LocalizedText zh={environmentStatusLabel(skill.environmentStatus, "zh")} en={environmentStatusLabel(skill.environmentStatus, "en")} /></strong></div>
-              <div><span><LocalizedText zh="依赖" en="Dependencies" /></span><strong>{skill.dependencies.length ? skill.dependencies.join(", ") : <LocalizedText zh="无已声明技能依赖" en="No declared Skill dependencies" />}</strong></div>
+              <div><span><LocalizedText zh="必需 Skill" en="Required Skills" /></span><strong>{skill.dependencies.length ? skill.dependencies.join(", ") : <LocalizedText zh="无结构化依赖声明" en="No structured dependency declarations" />}</strong></div>
+              <div><span><LocalizedText zh="正文引用" en="Instruction references" /></span><strong>{skill.referencedSkills.length ? skill.referencedSkills.join(", ") : <LocalizedText zh="未发现" en="None found" />}</strong></div>
             </div>
             <pre className="instruction-viewer i18n-zh" lang="zh-CN">{translatedInstructionOverview(skill)}</pre>
             <pre className="instruction-viewer i18n-en" lang="en">{skill.instructions || "SKILL.md has no instruction body."}</pre>
@@ -62,6 +68,8 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
               <pre>{skill.instructions || "SKILL.md 没有正文说明。"}</pre>
             </details>
           </section>
+
+          <SkillUpdatePreview skill={skill} />
 
           <section className="content-panel">
             <div className="panel-heading"><div><span className="eyebrow"><LocalizedText zh="场景地图" en="SCENARIO MAP" /></span><h2><LocalizedText zh="适用场景" en="Usage scenarios" /></h2></div><ProvenanceLabel kind="dashboard" /></div>
@@ -83,7 +91,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
             <div className="panel-heading"><div><span className="eyebrow"><LocalizedText zh="文件清单" en="FILE MANIFEST" /></span><h2><LocalizedText zh="配套文件" en="Supporting files" /></h2></div><span className="panel-count">{skill.resources.length}</span></div>
             <div className="resource-table">
               {skill.resources.map((resource) => (
-                <div key={resource.path}><FileCode2 size={15} /><code>{resource.path}</code><span><LocalizedText zh={resourceKindLabel(resource.kind, "zh")} en={resourceKindLabel(resource.kind, "en")} /></span><small>{resource.size.toLocaleString()} B</small></div>
+                <div key={resource.path}><FileCode2 size={15} /><BreakablePath value={resource.path} /><span><LocalizedText zh={resourceKindLabel(resource.kind, "zh")} en={resourceKindLabel(resource.kind, "en")} /></span><small>{resource.size.toLocaleString()} B</small></div>
               ))}
             </div>
           </section>
@@ -97,10 +105,14 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
               <div><dt><LocalizedText zh="权限" en="Permission" /></dt><dd><LocalizedText zh={permissionLabel(skill.source.permission, "zh")} en={permissionLabel(skill.source.permission, "en")} /></dd></div>
               {skill.plugin && <><div><dt><LocalizedText zh="插件" en="Plugin" /></dt><dd>{skill.plugin.name}</dd></div><div><dt><LocalizedText zh="插件版本" en="Plugin version" /></dt><dd>{skill.plugin.version}</dd></div></>}
               <div><dt><LocalizedText zh="作者" en="Author" /></dt><dd>{skill.author || <LocalizedText zh="元数据未声明" en="Not declared in metadata" />}</dd></div>
+              <div><dt><LocalizedText zh="本地指纹" en="Local fingerprint" /></dt><dd><code>{skill.fingerprint.value.slice(0, 16)}</code></dd></div>
+              <div><dt><LocalizedText zh="来源追踪" en="Source tracking" /></dt><dd>{skill.sourceTracking.status === "tracked" ? <LocalizedText zh="已记录" en="Tracked" /> : skill.sourceTracking.status === "untracked" ? <LocalizedText zh="未记录" en="Untracked" /> : <LocalizedText zh="不适用" en="Not applicable" />}</dd></div>
               <div><dt><LocalizedText zh="更新时间" en="Updated" /></dt><dd>{skill.modifiedAt ? <LocalizedText zh={new Date(skill.modifiedAt).toLocaleString("zh-CN")} en={new Date(skill.modifiedAt).toLocaleString("en-US")} /> : <LocalizedText zh="未知" en="Unknown" />}</dd></div>
             </dl>
-            <code className="path-block">{skill.directoryPath}</code>
+            <BreakablePath className="path-block" value={skill.directoryPath} />
           </section>
+
+          <SkillLifecycleActions skill={skill} />
 
           <section className="side-panel">
             <h2><GitBranch size={17} /> <LocalizedText zh="关联技能" en="Related Skills" /></h2>
@@ -110,7 +122,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ sk
 
           <section className="side-panel">
             <h2><ShieldCheck size={17} /> <LocalizedText zh="诊断" en="Diagnostics" /></h2>
-            {skill.issues.length || skill.environmentReasons.length ? <ul className="issue-list">{[...skill.issues, ...skill.environmentReasons].map((issue) => <li key={issue}><LocalizedText zh={issue} en={localizeGeneratedText(issue, "en")} /></li>)}</ul> : <p className="healthy-copy"><LocalizedText zh="结构有效，且未声明缺失依赖或外部工具。" en="Structure is valid with no declared missing dependencies or external tools." /></p>}
+            {skill.issues.length || skill.environmentReasons.length ? <ul className="issue-list">{[...skill.issues, ...skill.environmentReasons].map((issue) => <li key={issue}><LocalizedText zh={issue} en={localizeGeneratedText(issue, "en")} /></li>)}</ul> : <p className="healthy-copy"><LocalizedText zh="结构有效，未发现缺失的必需 Skill，也没有待确认的外部工具。" en="Structure is valid, with no missing required Skills or external tools awaiting verification." /></p>}
           </section>
         </aside>
       </div>

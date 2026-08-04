@@ -2,6 +2,9 @@ import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 
+import { snapshotLocalSkill } from "@/core/lifecycle/fingerprint";
+import { readSourceRegistry } from "@/core/lifecycle/source-registry";
+import type { TrackedSkillSource } from "@/core/lifecycle/types";
 import { parseSkillDocument } from "./parse";
 import { resolveCodexEnvironment } from "./paths";
 import { findActivePluginRoots } from "./plugins";
@@ -116,40 +119,6 @@ function resourceKind(relativePath: string): SkillResource["kind"] {
   return "other";
 }
 
-async function listResources(
-  root: string,
-  maxFiles = 300,
-): Promise<SkillResource[]> {
-  const resources: SkillResource[] = [];
-  const queue = [root];
-  while (queue.length && resources.length < maxFiles) {
-    const directory = queue.shift();
-    if (!directory) break;
-    let entries;
-    try {
-      entries = await readdir(directory, { withFileTypes: true });
-    } catch {
-      continue;
-    }
-    for (const entry of entries) {
-      if (resources.length >= maxFiles) break;
-      const absolute = path.join(directory, entry.name);
-      if (entry.isDirectory()) {
-        if (![".git", ".next", "node_modules"].includes(entry.name)) queue.push(absolute);
-      } else if (entry.isFile()) {
-        const details = await stat(absolute).catch(() => null);
-        const relative = path.relative(root, absolute);
-        resources.push({
-          path: relative,
-          kind: resourceKind(relative),
-          size: details?.size || 0,
-        });
-      }
-    }
-  }
-  return resources.sort((a, b) => a.path.localeCompare(b.path));
-}
-
 function initialStatus(parsed: ParsedSkill): SkillStatus {
   if (!parsed.metadataValid) return "invalid-metadata";
   if (parsed.internal) return "internal";
@@ -186,17 +155,25 @@ async function loadSkill(
   source: SkillSource,
   directoryPath: string,
   plugin?: SkillPluginContext,
+  trackedSources?: Map<string, TrackedSkillSource>,
 ): Promise<SkillRecord> {
   const skillPath = path.join(directoryPath, "SKILL.md");
-  const [content, agentConfig, resources, fileStat] = await Promise.all([
+  const [content, agentConfig, localSnapshot, fileStat] = await Promise.all([
     readFile(skillPath, "utf8"),
     readFile(path.join(directoryPath, "agents", "openai.yaml"), "utf8").catch(
       () => undefined,
     ),
-    listResources(directoryPath),
+    snapshotLocalSkill(directoryPath, { maxFiles: 500 }),
     stat(skillPath).catch(() => null),
   ]);
   const parsed = parseSkillDocument(content, path.basename(directoryPath), agentConfig);
+  const resources: SkillResource[] = localSnapshot.files.slice(0, 300).map((file) => ({
+    path: file.path,
+    kind: resourceKind(file.path),
+    size: file.size,
+  }));
+  const trackedKey = path.relative(source.rootPath, directoryPath).replaceAll("\\", "/").toLocaleLowerCase();
+  const trackedSource = source.kind === "personal" ? trackedSources?.get(trackedKey) : undefined;
   return {
     id: skillId(source, directoryPath),
     name: parsed.name,
@@ -211,6 +188,10 @@ async function loadSkill(
       fileStat && fileStat.mtimeMs >= Date.UTC(2000, 0, 1)
         ? fileStat.mtime.toISOString()
         : undefined,
+    fingerprint: localSnapshot.fingerprint,
+    sourceTracking: source.kind === "personal"
+      ? trackedSource ? { status: "tracked", ...trackedSource } : { status: "untracked" }
+      : { status: "not-applicable" },
     status: initialStatus(parsed),
     secondaryStatuses: [],
     structureStatus: parsed.metadataValid ? "valid" : "invalid",
@@ -230,6 +211,7 @@ async function loadSkill(
     instructions: parsed.instructions,
     resources,
     dependencies: parsed.dependencies,
+    referencedSkills: parsed.referencedSkills,
     missingDependencies: [],
     requiredTools: parsed.requiredTools,
     tags: parsed.tags,
@@ -254,15 +236,17 @@ function sourceRank(source: SkillSource): number {
 function classifyInventory(skills: SkillRecord[]): void {
   const names = new Set(skills.map((skill) => skill.name.toLocaleLowerCase()));
   for (const skill of skills) {
+    skill.referencedSkills = skill.referencedSkills.filter(
+      (reference) => names.has(reference.toLocaleLowerCase()),
+    );
     skill.missingDependencies = skill.dependencies.filter(
       (dependency) => !names.has(dependency.toLocaleLowerCase()),
     );
     if (skill.missingDependencies.length) {
       if (skill.status !== "invalid-metadata") skill.secondaryStatuses.push(skill.status);
       skill.status = "missing-dependency";
-      skill.issues.push(`缺少依赖：${skill.missingDependencies.join("、")}`);
       skill.environmentStatus = "needs-setup";
-      skill.environmentReasons.push(`缺少技能依赖：${skill.missingDependencies.join("、")}`);
+      skill.environmentReasons.push(`缺少必需 Skill：${skill.missingDependencies.join("、")}`);
     }
   }
 
@@ -307,6 +291,7 @@ function inventoryWithCacheState(inventory: SkillInventory, hit: boolean, expire
 async function scanSkills(environment: CodexEnvironment): Promise<SkillInventory> {
   const startedAt = performance.now();
   const warnings: string[] = [];
+  const trackedSources = await readSourceRegistry({ env: { CODEX_HOME: environment.codexHome } });
 
   const candidateGroups = await Promise.all(
     environment.sources.map(async (source) => {
@@ -334,7 +319,7 @@ async function scanSkills(environment: CodexEnvironment): Promise<SkillInventory
   );
 
   const settled = await Promise.allSettled(
-    candidateGroups.flat().map(({ source, directoryPath, plugin }) => loadSkill(source, directoryPath, plugin)),
+    candidateGroups.flat().map(({ source, directoryPath, plugin }) => loadSkill(source, directoryPath, plugin, trackedSources)),
   );
   const skills: SkillRecord[] = [];
   for (const result of settled) {

@@ -59,7 +59,7 @@ export interface SkillPluginContext {
   version: string;
 }
 
-export interface SkillRecord {
+export interface SkillSummary {
   id: string;
   name: string;
   displayName: string;
@@ -70,6 +70,8 @@ export interface SkillRecord {
   skillPath: string;
   directoryPath: string;
   modifiedAt?: string;
+  fingerprint: SkillFingerprint;
+  sourceTracking: SkillSourceTracking;
   status: SkillStatus;
   secondaryStatuses: SkillStatus[];
   structureStatus: SkillStructureStatus;
@@ -78,9 +80,9 @@ export interface SkillRecord {
   issues: string[];
   allowImplicitInvocation: boolean;
   defaultPrompt?: string;
-  instructions: string;
   resources: SkillResource[];
   dependencies: string[];
+  referencedSkills: string[];
   missingDependencies: string[];
   requiredTools: string[];
   tags: string[];
@@ -90,7 +92,12 @@ export interface SkillRecord {
   provenance: SkillProvenance;
 }
 
-export interface SkillInventory {
+export interface SkillRecord extends SkillSummary {
+  /** Full SKILL.md body. Deliberately omitted from list and graph payloads. */
+  instructions: string;
+}
+
+export interface SkillInventory<TSkill extends SkillSummary = SkillRecord> {
   codexHome: string;
   detectedFrom: "CODEX_HOME" | "user-profile-default";
   scannedAt: string;
@@ -101,9 +108,11 @@ export interface SkillInventory {
     expiresAt: string;
   };
   sourceRoots: SkillSource[];
-  skills: SkillRecord[];
+  skills: TSkill[];
   warnings: string[];
 }
+
+export type SkillInventorySummary = SkillInventory<SkillSummary>;
 
 export interface ParsedSkill {
   name: string;
@@ -116,7 +125,9 @@ export interface ParsedSkill {
   allowImplicitInvocation: boolean;
   defaultPrompt?: string;
   dependencies: string[];
+  referencedSkills: string[];
   requiredTools: string[];
   tags: string[];
   internal: boolean;
 }
+import type { SkillFingerprint, SkillSourceTracking } from "@/core/lifecycle/types";

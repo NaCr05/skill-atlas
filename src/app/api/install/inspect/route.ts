@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { apiErrorResponse } from "@/core/errors/skill-atlas-error";
 import { inspectGithubSkill } from "@/core/installer/inspect-source";
 import { assertLocalMutationRequest } from "@/core/security/local-request";
 
@@ -17,7 +18,6 @@ export async function POST(request: Request) {
     const review = await inspectGithubSkill(input);
     return Response.json(review, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "无法审查安装源。";
-    return Response.json({ error: message }, { status: 400 });
+    return apiErrorResponse(request, error, "INSTALL_INSPECTION_FAILED");
   }
 }

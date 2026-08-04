@@ -10,7 +10,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: language === "zh" ? "技能市场" : "Skill Marketplace" };
 }
 
-export default function MarketplacePage() {
+function firstValue(value: string | string[] | undefined): string {
+  return (Array.isArray(value) ? value[0] : value || "").slice(0, 1_000);
+}
+
+export default async function MarketplacePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const parameters = await searchParams;
   return (
     <main className="marketplace-page">
       <header className="page-intro">
@@ -21,7 +30,16 @@ export default function MarketplacePage() {
         </h1>
         <p><LocalizedText zh="市场数据只负责发现。安装前仍会回到 GitHub 原始目录，展示完整文件、脚本风险和唯一目标路径。" en="Marketplace data is for discovery only. Before installation, Skill Atlas returns to the original GitHub directory to show every file, script risk, and the single target path." /></p>
       </header>
-      <MarketplaceClient />
+      <MarketplaceClient
+        initialQuery={firstValue(parameters.q).slice(0, 200)}
+        initialSourceUrl={firstValue(parameters.sourceUrl)}
+        initialSkillName={firstValue(parameters.skillName).slice(0, 160)}
+        repairContext={firstValue(parameters.repairIssue) ? {
+          issueId: firstValue(parameters.repairIssue).slice(0, 240),
+          consumer: firstValue(parameters.consumer).slice(0, 160),
+          dependency: firstValue(parameters.dependency).slice(0, 160),
+        } : undefined}
+      />
     </main>
   );
 }

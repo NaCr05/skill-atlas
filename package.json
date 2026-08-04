@@ -18,7 +18,8 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
     "build": "next build",
-    "start": "next start -H 127.0.0.1",
+    "postbuild": "node scripts/startup/prepare-standalone.mjs",
+    "start": "node .next/standalone/server.js",
     "doctor": "node scripts/startup/launcher.mjs --check --no-browser",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -27,9 +28,13 @@
     "pretest:e2e": "npm run build",
     "test:e2e": "playwright test",
     "screenshots": "playwright test --config playwright.docs.config.ts",
+    "package:windows:stage": "npm run build && node scripts/windows/package-windows.mjs --stage-only",
+    "package:windows": "npm run build && node scripts/windows/package-windows.mjs",
+    "verify:windows-stage": "node scripts/windows/verify-stage.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
+    "@xyflow/react": "^12.11.2",
     "lucide-react": "^1.28.0",
     "next": "16.2.12",
     "react": "19.2.4",

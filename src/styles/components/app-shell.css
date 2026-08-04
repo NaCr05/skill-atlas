@@ -1,0 +1,332 @@
+.app-header {
+  position: sticky;
+  z-index: 40;
+  top: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto minmax(180px, 1fr);
+  align-items: center;
+  min-height: 70px;
+  padding: 0 4vw;
+  color: #eaf0ff;
+  border-bottom: 1px solid rgb(255 255 255 / 16%);
+  background: rgb(12 22 48 / 96%);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+}
+
+.brand-mark {
+  display: grid;
+  grid-template-columns: 7px 7px;
+  gap: 3px;
+  padding: 7px;
+  border: 1px solid rgb(255 255 255 / 32%);
+  background: rgb(255 255 255 / 7%);
+  transform: rotate(45deg);
+}
+
+.brand-mark i {
+  width: 7px;
+  height: 7px;
+  background: var(--electric);
+}
+
+.brand-mark i:nth-child(2),
+.brand-mark i:nth-child(3) {
+  background: #f2a53a;
+}
+
+.brand > span:last-child {
+  display: grid;
+  line-height: 1.05;
+}
+
+.brand strong {
+  font-family: Bahnschrift, "Arial Narrow", sans-serif;
+  font-size: 0.94rem;
+  letter-spacing: 0.14em;
+}
+
+.brand small {
+  margin-top: 5px;
+  color: #9eabc9;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.main-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 13px;
+  color: #c9d2e8;
+  font-size: 0.88rem;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.main-nav a:hover {
+  color: white;
+  background: rgb(255 255 255 / 8%);
+}
+
+.local-stamp {
+  display: inline-flex;
+  justify-self: end;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  color: #aebad6;
+  border: 1px solid rgb(255 255 255 / 18%);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+}
+
+.hero-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  gap: clamp(40px, 7vw, 110px);
+  align-items: center;
+  max-width: 1440px;
+  min-height: 555px;
+  margin: 0 auto;
+  padding: 78px 5vw 68px;
+}
+
+.eyebrow {
+  color: var(--blue);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.hero-copy h1,
+.page-intro h1 {
+  max-width: 820px;
+  margin: 18px 0 22px;
+  font-family: Bahnschrift, "Arial Narrow", sans-serif;
+  font-size: clamp(3.25rem, 6.4vw, 6.8rem);
+  font-weight: 680;
+  letter-spacing: -0.055em;
+  line-height: 0.94;
+}
+
+.hero-copy h1 em,
+.page-intro h1 em {
+  color: var(--blue);
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.hero-copy > p,
+.page-intro > p {
+  max-width: 670px;
+  color: var(--ink-soft);
+  font-size: clamp(1rem, 1.4vw, 1.22rem);
+  line-height: 1.75;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-size: 0.86rem;
+  font-weight: 680;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.button-primary {
+  color: white;
+  background: var(--blue);
+  box-shadow: 0 8px 20px rgb(46 85 212 / 20%);
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--blue-dark);
+}
+
+.button-quiet {
+  color: var(--ink);
+  border-color: var(--line);
+  background: rgb(255 255 255 / 64%);
+}
+
+.button-quiet:hover:not(:disabled) {
+  border-color: var(--line-dark);
+  background: white;
+}
+
+.button-wide {
+  width: 100%;
+}
+
+.scan-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 27px;
+  color: #edf2ff;
+  border: 1px solid #22345f;
+  background: #101c3a;
+  box-shadow: 18px 20px 0 #d9dfeb, var(--shadow);
+}
+
+.scan-panel::before {
+  position: absolute;
+  top: -35px;
+  right: -35px;
+  width: 130px;
+  height: 130px;
+  border: 1px solid rgb(111 140 255 / 34%);
+  content: "";
+  transform: rotate(32deg);
+}
+
+.scan-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #98a9d2;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+}
+
+.scan-panel-heading i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5fe0b5;
+  box-shadow: 0 0 0 5px rgb(95 224 181 / 10%);
+}
+
+.scan-panel > code {
+  display: block;
+  overflow: hidden;
+  margin: 20px 0;
+  padding: 12px;
+  color: #aebfea;
+  border: 1px solid rgb(255 255 255 / 10%);
+  background: rgb(0 0 0 / 15%);
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scan-panel dl {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1px;
+  margin: 0;
+  background: rgb(255 255 255 / 12%);
+}
+
+.scan-panel dl > div {
+  padding: 18px;
+  background: #101c3a;
+}
+
+.scan-panel dt {
+  color: #9eabc9;
+  font-size: 0.72rem;
+}
+
+.scan-panel dd {
+  margin: 6px 0 0;
+  font-family: Bahnschrift, sans-serif;
+  font-size: 2rem;
+}
+
+.scan-panel dd small {
+  margin-left: 6px;
+  color: #7585aa;
+  font-family: "Cascadia Code", monospace;
+  font-size: 0.58rem;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.scan-panel > p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 20px 0 0;
+  color: #8fa0c7;
+  font-size: 0.72rem;
+}
+
+.capability-rail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  max-width: 1440px;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.capability-rail > div {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 76px;
+  padding: 17px 22px;
+  border-right: 1px solid var(--line);
+}
+
+.capability-rail > div:last-child {
+  border-right: 0;
+}
+
+.capability-rail svg {
+  color: var(--blue);
+}
+
+.capability-rail span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.capability-rail strong {
+  font-family: Bahnschrift, sans-serif;
+  font-size: 1.45rem;
+}
+
+.capability-rail [data-alert="true"] svg,
+.capability-rail [data-alert="true"] strong {
+  color: var(--amber);
+}

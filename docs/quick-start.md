@@ -121,7 +121,9 @@ The setting applies only to the current terminal session. Set it before starting
 
 ## Optional integrations
 
-Local discovery and default Prompt generation need no keys. To create the optional local environment file, use the command for your shell.
+Local discovery and default Prompt generation need no keys. The easiest AI setup is **Environment → AI connection console**: choose OpenAI or DeepSeek, enter a model and API key, then select **Save AI connection**. It takes effect immediately, survives refreshes and restarts, and never returns the saved key to the page.
+
+Environment variables remain available as an advanced alternative. To create the optional local environment file, use the command for your shell.
 
 PowerShell:
 
@@ -136,6 +138,24 @@ copy .env.example .env.local
 ```
 
 Open `.env.local` in a text editor and fill only the variables you need. Restart the development server after changing them. Never commit this file.
+
+For OpenAI Prompt enhancement:
+
+```dotenv
+AI_PROVIDER=openai
+OPENAI_API_KEY=your-key
+OPENAI_MODEL=your-model
+```
+
+For DeepSeek Prompt enhancement:
+
+```dotenv
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=your-key
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+Page-managed settings override corresponding environment variables. **Restore environment settings** removes the encrypted page-managed file and returns to environment-variable resolution. `AI_PROVIDER=auto` selects a complete OpenAI configuration first, then DeepSeek. The Settings page shows the active provider without exposing its key. Missing configuration or a failed provider request keeps the local deterministic Prompt; Skill Atlas does not silently switch to another paid provider.
 
 ## Run a production build locally
 
@@ -332,7 +352,9 @@ npm run dev
 
 ## 启用可选服务
 
-本地发现和默认 Prompt 生成不需要任何密钥。需要创建本地环境配置文件时，请使用当前终端对应的命令。
+本地发现和默认 Prompt 生成不需要任何密钥。配置 AI 最简单的方式是打开**环境设置 → AI 连接配置台**：选择 OpenAI 或 DeepSeek，填写模型和 API Key，然后点击**保存 AI 连接**。配置立即生效，刷新和重启后仍然保留，已保存的密钥不会再回传到页面。
+
+环境变量仍可作为高级备用方式。需要创建本地环境配置文件时，请使用当前终端对应的命令。
 
 PowerShell：
 
@@ -347,6 +369,24 @@ copy .env.example .env.local
 ```
 
 用文本编辑器打开 `.env.local`，只填写需要的变量。修改后重新启动开发服务，并且不要把这个文件提交到 Git。
+
+使用 OpenAI 增强 Prompt：
+
+```dotenv
+AI_PROVIDER=openai
+OPENAI_API_KEY=你的密钥
+OPENAI_MODEL=你的模型名称
+```
+
+使用 DeepSeek 增强 Prompt：
+
+```dotenv
+AI_PROVIDER=deepseek
+DEEPSEEK_API_KEY=你的密钥
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+页面保存的配置优先于对应的环境变量。点击**恢复环境变量**会删除页面加密配置并恢复环境变量。`AI_PROVIDER=auto` 会优先选择配置完整的 OpenAI，其次选择 DeepSeek。环境设置页会显示当前提供商，但不会显示密钥。配置缺失或提供商请求失败时，会保留本地确定性 Prompt，不会静默切换到另一个付费提供商。
 
 ## 在本机运行生产版本
 
