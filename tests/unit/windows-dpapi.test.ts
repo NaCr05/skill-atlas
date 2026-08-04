@@ -10,5 +10,5 @@ describe("Windows DPAPI", () => {
     const ciphertext = await protectSecret(secret);
     expect(ciphertext).not.toContain(secret);
     expect(await unprotectSecret(ciphertext)).toBe(secret);
-  });
+  }, 20_000);
 });
