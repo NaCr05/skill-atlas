@@ -1,0 +1,131 @@
+/* Local discovery memory ------------------------------------------------ */
+
+.discovery-history {
+  min-width: 0;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgb(128 148 187 / 22%);
+}
+
+.discovery-history > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.discovery-history > header span,
+.discovery-history > header button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.discovery-history > header span {
+  color: #9ba9c1;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.discovery-history > header button {
+  padding: 2px 0;
+  color: #8494b2;
+  background: transparent;
+  font-size: 0.57rem;
+  cursor: pointer;
+}
+
+.discovery-history > header button:hover,
+.discovery-history > header button:focus-visible {
+  color: var(--blue);
+  outline: 0;
+}
+
+.discovery-history-track {
+  display: flex;
+  gap: 6px;
+  max-width: 100%;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-color: #35496b transparent;
+  scrollbar-width: thin;
+}
+
+.discovery-history-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 27px;
+  flex: 0 0 clamp(190px, 31%, 275px);
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #293750;
+  border-left: 2px solid #566fca;
+  border-radius: 3px;
+  background: #0c1422;
+}
+
+.discovery-history-item:hover,
+.discovery-history-item:focus-within {
+  border-color: #4d6393;
+  border-left-color: #8ba2ff;
+  background: #101b2e;
+}
+
+.discovery-history-open {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 8px 9px;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.discovery-history-open strong,
+.discovery-history-open small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discovery-history-open strong {
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.discovery-history-open small {
+  color: #7f8ea8;
+  font-size: 0.54rem;
+}
+
+.discovery-history-remove {
+  display: grid;
+  width: 27px;
+  color: #71809a;
+  border-left: 1px solid #26344d;
+  background: transparent;
+  place-items: center;
+  cursor: pointer;
+}
+
+.discovery-history-remove:hover,
+.discovery-history-remove:focus-visible {
+  color: #ffaaa6;
+  outline: 0;
+  background: #25171d;
+}
+
+.market-switcher + .market-search + .discovery-history,
+.market-switcher + .discovery-history {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 760px) {
+  .discovery-history-item {
+    flex-basis: min(78vw, 270px);
+  }
+}

@@ -1,0 +1,389 @@
+.recoveryCenter {
+  margin: 18px 0 28px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--amber) 52%, var(--line));
+  background:
+    linear-gradient(135deg, rgb(229 166 52 / 7%), transparent 38%),
+    var(--paper);
+}
+
+.recoveryCenter[data-healthy="true"] {
+  border-color: color-mix(in srgb, #61d4b3 40%, var(--line));
+  background:
+    linear-gradient(135deg, rgb(97 212 179 / 6%), transparent 38%),
+    var(--paper);
+}
+
+.recoveryHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.recoveryTitle {
+  display: flex;
+  min-width: 0;
+  gap: 14px;
+}
+
+.recoveryIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--amber);
+  border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+  background: rgb(229 166 52 / 9%);
+}
+
+.recoveryCenter[data-healthy="true"] .recoveryIcon {
+  color: #61d4b3;
+  border-color: rgb(97 212 179 / 42%);
+  background: rgb(97 212 179 / 8%);
+}
+
+.recoveryTitle h2 {
+  margin: 4px 0 5px;
+  color: var(--ink);
+  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-size: 1.15rem;
+}
+
+.recoveryTitle p {
+  max-width: 760px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  line-height: 1.65;
+}
+
+.healthBadge {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  color: #f2c875;
+  border: 1px solid rgb(229 166 52 / 48%);
+  background: rgb(229 166 52 / 8%);
+  font-family: "Cascadia Code", monospace;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.healthBadge[data-healthy="true"] {
+  color: #8de3ca;
+  border-color: rgb(97 212 179 / 42%);
+  background: rgb(97 212 179 / 8%);
+}
+
+.recoveryMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 0.7fr)) minmax(210px, 1.2fr);
+  border-bottom: 1px solid var(--line);
+}
+
+.recoveryMetrics > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 14px 18px;
+  border-right: 1px solid var(--line);
+}
+
+.recoveryMetrics > div:last-child {
+  border-right: 0;
+}
+
+.recoveryMetrics span {
+  color: var(--ink-soft);
+  font-size: 0.61rem;
+}
+
+.recoveryMetrics strong {
+  color: var(--ink);
+  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-size: 1.22rem;
+}
+
+.recoveryMetrics .inspectedAt {
+  overflow: hidden;
+  font-family: "Cascadia Code", monospace;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.storageRoots {
+  border-bottom: 1px solid var(--line);
+}
+
+.storageRoots summary {
+  padding: 12px 18px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.storageRoots > div {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 12px;
+  padding: 9px 18px;
+  border-top: 1px solid var(--line);
+}
+
+.storageRoots span {
+  color: var(--ink-soft);
+  font-size: 0.61rem;
+}
+
+.storageRoots code,
+.issuePath code,
+.relatedPath code,
+.diagnostic code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 0.61rem;
+}
+
+.recoveryHealthy {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 24px 22px;
+  color: #61d4b3;
+}
+
+.recoveryHealthy svg {
+  flex: 0 0 auto;
+}
+
+.recoveryHealthy strong {
+  color: var(--ink);
+  font-size: 0.78rem;
+}
+
+.recoveryHealthy p {
+  margin: 5px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.67rem;
+}
+
+.recoveryIssues {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.recoveryIssues > article {
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--amber) 48%, var(--line));
+  background: rgb(229 166 52 / 4%);
+}
+
+.recoveryIssues > article[data-severity="danger"] {
+  border-color: rgb(239 107 117 / 48%);
+  background: rgb(178 58 70 / 7%);
+}
+
+.issueHeading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: flex-start;
+}
+
+.issueHeading > svg {
+  margin-top: 1px;
+  color: var(--amber);
+}
+
+.recoveryIssues > article[data-severity="danger"] .issueHeading > svg {
+  color: #ef6b75;
+}
+
+.issueHeading strong {
+  color: var(--ink);
+  font-size: 0.76rem;
+}
+
+.issueHeading p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  line-height: 1.55;
+}
+
+.issueHeading > span {
+  padding: 4px 6px;
+  color: #f2c875;
+  border: 1px solid currentColor;
+  font-family: "Cascadia Code", monospace;
+  font-size: 0.54rem;
+}
+
+.issueHeading > span[data-recoverability="safe-restore"] {
+  color: #8de3ca;
+}
+
+.issueHeading > span[data-recoverability="safe-cleanup"],
+.issueHeading > span[data-recoverability="safe-retry"] {
+  color: #8de3ca;
+}
+
+.issueHeading > span[data-recoverability="audit-only"] {
+  color: #9eb3ff;
+}
+
+.issueMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 11px 0 8px 29px;
+}
+
+.issueMeta > * {
+  padding: 3px 6px;
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+  font-size: 0.55rem;
+}
+
+.issuePath {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-left: 29px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  background: rgb(0 0 0 / 10%);
+}
+
+.issuePath button {
+  width: 30px;
+  height: 30px;
+}
+
+.relatedPath {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px;
+  margin: 9px 0 0 29px;
+}
+
+.relatedPath span {
+  color: var(--ink-soft);
+  font-size: 0.58rem;
+}
+
+.diagnostic {
+  margin: 9px 0 0 29px;
+}
+
+.diagnostic summary {
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.59rem;
+}
+
+.diagnostic code {
+  display: block;
+  margin-top: 7px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  background: rgb(0 0 0 / 12%);
+}
+
+.readOnlyNote {
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  color: var(--ink-soft);
+  border-left: 3px solid var(--blue);
+  background: rgb(84 112 214 / 7%);
+  font-size: 0.62rem;
+  line-height: 1.55;
+}
+
+.issueActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 11px 0 0 29px;
+}
+
+.issueActions button {
+  min-height: 34px;
+  font-size: 0.62rem;
+}
+
+@media (max-width: 840px) {
+  .recoveryMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recoveryMetrics > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .recoveryMetrics > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 620px) {
+  .recoveryHeader,
+  .issueHeading {
+    grid-template-columns: 1fr;
+  }
+
+  .recoveryHeader {
+    display: grid;
+  }
+
+  .healthBadge {
+    width: fit-content;
+  }
+
+  .recoveryMetrics {
+    grid-template-columns: 1fr;
+  }
+
+  .recoveryMetrics > div {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .recoveryMetrics > div:last-child {
+    border-bottom: 0;
+  }
+
+  .storageRoots > div,
+  .relatedPath {
+    grid-template-columns: 1fr;
+  }
+
+  .issueHeading {
+    display: grid;
+  }
+
+  .issueHeading > span {
+    width: fit-content;
+  }
+
+  .issueMeta,
+  .issuePath,
+  .relatedPath,
+  .diagnostic {
+    margin-left: 0;
+  }
+
+  .issueActions {
+    margin-left: 0;
+  }
+}

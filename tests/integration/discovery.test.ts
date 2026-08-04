@@ -27,6 +27,9 @@ describe("skill discovery and classification", () => {
     expect(ready?.status).toBe("usable");
     expect(ready?.structureStatus).toBe("valid");
     expect(ready?.environmentStatus).toBe("ready");
+    expect(ready?.fingerprint.complete).toBe(true);
+    expect(ready?.fingerprint.fileCount).toBeGreaterThan(0);
+    expect(ready?.sourceTracking.status).toBe("untracked");
     expect(explicit?.status).toBe("explicit-only");
     expect(explicit?.structureStatus).toBe("valid");
     expect(explicit?.environmentStatus).toBe("ready");
@@ -130,6 +133,49 @@ describe("skill discovery and classification", () => {
     expect(browser?.relationships.map((relationship) => relationship.name)).toContain("browser-b");
     expect(browser?.relationships.map((relationship) => relationship.name)).not.toContain("release-note");
     expect(browser?.relationships[0]?.reason).toContain("共同标签");
+  });
+
+  it("does not treat code examples or prose Skill references as hard dependencies", async () => {
+    const temporary = await mkdtemp(path.join(os.tmpdir(), "skill-atlas-reference-regression-"));
+    temporaryDirectories.push(temporary);
+    const codexHome = path.join(temporary, ".codex");
+    const fixtures = [
+      ["imagegen", "Generates images.", "Run image generation."],
+      ["hatch-pet", "Builds an animated pet.", "Use $imagegen first.\n\n```powershell\n$source = 'art.png'\n$package = 'pet.zip'\n```"],
+      ["shutaai-extract-pdf", "Extracts course PDFs.", "In PowerShell, download with `curl.exe --output $dest $assetUrl`.\n\n```powershell\n$dest = Join-Path $course 'lecture.pdf'\n```"],
+    ];
+    await Promise.all(fixtures.map(async ([name, description, instructions]) => {
+      const root = path.join(codexHome, "skills", name);
+      await mkdir(root, { recursive: true });
+      await writeFile(path.join(root, "SKILL.md"), `---\nname: ${name}\ndescription: ${description}\n---\n\n${instructions}`);
+    }));
+
+    const inventory = await discoverSkills({
+      env: { CODEX_HOME: codexHome, USERPROFILE: temporary, LOCALAPPDATA: path.join(temporary, "local") },
+      homeDirectory: temporary,
+      forceRefresh: true,
+    });
+    const hatchPet = inventory.skills.find((skill) => skill.name === "hatch-pet");
+    const extractor = inventory.skills.find((skill) => skill.name === "shutaai-extract-pdf");
+
+    expect(hatchPet).toMatchObject({
+      status: "usable",
+      environmentStatus: "ready",
+      dependencies: [],
+      referencedSkills: ["imagegen"],
+      missingDependencies: [],
+    });
+    expect(hatchPet?.relationships[0]).toMatchObject({
+      name: "imagegen",
+      reason: "Skill 说明中引用",
+    });
+    expect(extractor).toMatchObject({
+      status: "usable",
+      environmentStatus: "ready",
+      dependencies: [],
+      referencedSkills: [],
+      missingDependencies: [],
+    });
   });
 
   it("scans 500 direct Skill directories in under five seconds", async () => {

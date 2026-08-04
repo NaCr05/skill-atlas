@@ -1,3 +1,5 @@
+import type { SkillFingerprint } from "@/core/lifecycle/types";
+
 export type RiskLevel = "info" | "review" | "blocked";
 
 export interface InstallRisk {
@@ -12,6 +14,8 @@ export interface InstallationReview {
   sourceUrl: string;
   repository: string;
   ref: string;
+  revision: string;
+  fingerprint: SkillFingerprint;
   sourceDirectory: string;
   skillName: string;
   description: string;
@@ -20,6 +24,8 @@ export interface InstallationReview {
   totalBytes: number;
   risks: InstallRisk[];
   installAllowed: boolean;
+  sourceTrust: import("@/core/github/skill-source").GithubSourceTrust;
+  sourcePolicy: import("@/core/source-policy/source-policy").SourcePolicyEvaluation;
 }
 
 export interface InstallationResult {
@@ -28,18 +34,13 @@ export interface InstallationResult {
   fileCount: number;
   totalBytes: number;
   verifiedFiles: string[];
+  sourceTracking: "recorded" | "failed";
 }
 
-export interface GitTreeEntry {
-  path: string;
-  mode: string;
-  type: "blob" | "tree" | "commit";
-  size?: number;
-  url: string;
-}
+export type { GitTreeEntry } from "@/core/github/skill-source";
 
 export interface InternalInstallPlan extends InstallationReview {
   owner: string;
   repo: string;
-  entries: GitTreeEntry[];
+  entries: import("@/core/github/skill-source").GitTreeEntry[];
 }

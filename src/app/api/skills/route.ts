@@ -1,11 +1,13 @@
 import { discoverSkills } from "@/core/skills/discover";
+import { apiErrorResponse } from "@/core/errors/skill-atlas-error";
+import { summarizeSkillInventory } from "@/core/skills/summary";
 import { assertLocalMutationRequest } from "@/core/security/local-request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const inventory = await discoverSkills();
+  const inventory = summarizeSkillInventory(await discoverSkills());
   return Response.json(inventory, {
     headers: { "Cache-Control": "no-store" },
   });
@@ -14,10 +16,9 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     assertLocalMutationRequest(request);
-    const inventory = await discoverSkills({ forceRefresh: true });
+    const inventory = summarizeSkillInventory(await discoverSkills({ forceRefresh: true }));
     return Response.json(inventory, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "重新扫描失败。";
-    return Response.json({ error: message }, { status: 400 });
+    return apiErrorResponse(request, error, "RESCAN_FAILED");
   }
 }

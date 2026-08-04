@@ -3,8 +3,8 @@
 import { ArrowRight, FolderOpen, Pin, Star } from "lucide-react";
 
 import { sourceKindLabel, sourceLabel } from "@/core/i18n";
-import { translatedSkillDescription } from "@/core/skill-translations";
-import type { SkillRecord } from "@/core/skills/types";
+import { skillDescriptionLocalizationKind, translatedSkillDescription } from "@/core/skill-translations";
+import type { SkillSummary } from "@/core/skills/types";
 import { useLanguage } from "./language-provider";
 import { StatusBadge } from "./status-badge";
 import { TranslationBadge } from "./translation-badge";
@@ -16,13 +16,14 @@ export function SkillCard({
   pinned,
   onSelect,
 }: {
-  skill: SkillRecord;
+  skill: SkillSummary;
   selected: boolean;
   favorite?: boolean;
   pinned?: boolean;
-  onSelect: (skill: SkillRecord) => void;
+  onSelect: (skill: SkillSummary) => void;
 }) {
   const { language, t } = useLanguage();
+  const descriptionKind = skillDescriptionLocalizationKind(skill);
   return (
     <button
       type="button"
@@ -46,7 +47,7 @@ export function SkillCard({
         <span className="skill-card-description">
           {language === "zh" ? translatedSkillDescription(skill) : skill.description}
         </span>
-        {!/\p{Script=Han}/u.test(skill.description) && <TranslationBadge />}
+        {descriptionKind !== "source" && <TranslationBadge kind={descriptionKind} />}
       </span>
       <span className="skill-card-meta">
         <span>

@@ -1,16 +1,17 @@
 "use client";
 
-import { ArrowUpRight, Copy, FolderOpen, Link2, Pin, Save, Sparkles, Star, StickyNote } from "lucide-react";
+import { ArrowUpRight, Copy, FolderOpen, Link2, PauseCircle, Pin, Save, Sparkles, Star, StickyNote, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
 import { environmentStatusLabel, localizeGeneratedText, permissionLabel, sourceKindLabel } from "@/core/i18n";
 import {
+  skillDescriptionLocalizationKind,
   translatedSkillDescription,
   translatedTags,
   translatedUseCases,
 } from "@/core/skill-translations";
-import type { SkillRecord } from "@/core/skills/types";
+import type { SkillSummary } from "@/core/skills/types";
 import { useLanguage } from "./language-provider";
 import { StatusBadge } from "./status-badge";
 import { TranslationBadge } from "./translation-badge";
@@ -24,18 +25,23 @@ export function SkillInspector({
   onToggleFavorite,
   onTogglePinned,
   onSaveNote,
+  onRemove,
+  onDisable,
 }: {
-  skill: SkillRecord;
-  onPrompt: (skill: SkillRecord) => void;
+  skill: SkillSummary;
+  onPrompt: (skill: SkillSummary) => void;
   favorite: boolean;
   pinned: boolean;
   note: string;
   onToggleFavorite: (skillId: string) => void;
   onTogglePinned: (skillId: string) => void;
   onSaveNote: (skillId: string, note: string) => void;
+  onRemove?: (skill: SkillSummary) => void;
+  onDisable?: (skill: SkillSummary) => void;
 }) {
   const { language, t } = useLanguage();
   const [noteDraft, setNoteDraft] = useState(note);
+  const descriptionKind = skillDescriptionLocalizationKind(skill);
 
   return (
     <aside className="skill-inspector" aria-label={`${skill.displayName} ${t("摘要", "summary")}`}>
@@ -59,12 +65,13 @@ export function SkillInspector({
       <p className="inspector-description">
         {language === "zh" ? translatedSkillDescription(skill) : skill.description}
       </p>
-      {!/\p{Script=Han}/u.test(skill.description) && <TranslationBadge />}
+      {descriptionKind !== "source" && <TranslationBadge kind={descriptionKind} />}
 
       <dl className="inspector-facts">
         <div><dt><FolderOpen size={14} aria-hidden="true" /> {t("配套文件", "Files")}</dt><dd>{skill.resources.length}</dd></div>
         <div><dt><Link2 size={14} aria-hidden="true" /> {t("关联技能", "Related")}</dt><dd>{skill.relationships.length}</dd></div>
         <div><dt>{t("环境", "Environment")}</dt><dd>{environmentStatusLabel(skill.environmentStatus, language)}</dd></div>
+        {skill.missingDependencies.length > 0 && <div><dt>{t("缺少必需 Skill", "Required Skills missing")}</dt><dd>{skill.missingDependencies.join(", ")}</dd></div>}
       </dl>
 
       <section className="inspector-section">
@@ -106,6 +113,16 @@ export function SkillInspector({
         <Link className="button button-quiet button-wide" href={`/skills/${skill.id}`}>
           {t("详情", "Details")} <ArrowUpRight size={15} aria-hidden="true" />
         </Link>
+        {onDisable && skill.source.kind === "personal" && skill.source.permission === "manage" && (
+          <button className="button button-quiet button-wide" type="button" onClick={() => onDisable?.(skill)}>
+            <PauseCircle size={15} aria-hidden="true" /> {t("停用 Skill", "Disable Skill")}
+          </button>
+        )}
+        {onRemove && skill.source.kind === "personal" && skill.source.permission === "manage" && (
+          <button className="button button-danger-quiet button-wide" type="button" onClick={() => onRemove(skill)}>
+            <Trash2 size={15} aria-hidden="true" /> {t("移到回收站", "Move to trash")}
+          </button>
+        )}
       </div>
     </aside>
   );

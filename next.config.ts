@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // Dynamic reads outside the repository are the product's intended local behavior.
   turbopack: {
     ignoreIssue: [

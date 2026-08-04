@@ -18,7 +18,7 @@ const STATUS_LABELS: Record<Language, Record<SkillStatus, string>> = {
     usable: "可自动调用",
     "explicit-only": "需显式调用",
     conditional: "有外部条件",
-    "missing-dependency": "依赖缺失",
+    "missing-dependency": "Skill 依赖缺失",
     "invalid-metadata": "元数据异常",
     duplicate: "重复入口",
     internal: "内部能力",
@@ -29,7 +29,7 @@ const STATUS_LABELS: Record<Language, Record<SkillStatus, string>> = {
     usable: "Automatic invocation",
     "explicit-only": "Explicit invocation",
     conditional: "Conditional",
-    "missing-dependency": "Dependency missing",
+    "missing-dependency": "Skill dependency missing",
     "invalid-metadata": "Invalid metadata",
     duplicate: "Duplicate entry",
     internal: "Internal",
@@ -131,6 +131,9 @@ export function localizeGeneratedText(text: string, language: Language): string 
     [/^元数据异常，无法验证运行环境$/, () => "Invalid metadata blocks environment verification"],
     [/^声明了外部工具，需在 Codex 会话中确认：(.+)$/, (match) => `Declared external tools must be confirmed in a Codex session: ${match[1]}`],
     [/^缺少技能依赖：(.+)$/, (match) => `Missing Skill dependencies: ${match[1]}`],
+    [/^缺少必需 Skill：(.+)$/, (match) => `Required Skills missing: ${match[1]}`],
+    [/^声明为必需 Skill 依赖$/, () => "Declared as a required Skill dependency"],
+    [/^Skill 说明中引用$/, () => "Referenced in the Skill instructions"],
     [/^未找到来源目录：(.+)$/, (match) => `Source directory not found: ${match[1]}`],
     [/^Skill 读取失败：(.+)$/, (match) => `Skill read failed: ${match[1]}`],
     [/^来自 (.+) 的热门 Skill$/, (match) => `Popular Skill from ${match[1]}`],
@@ -178,6 +181,11 @@ export function localizeInstallerText(text: string, language: Language): string 
     "目录超过 MVP 安全上限": "Directory exceeds MVP safety limits",
     "包含链接或子模块": "Contains links or submodules",
     "目标目录已存在": "Target directory already exists",
+    "来源不在信任名单": "Source is not on the trust list",
+    "许可证策略不允许此来源": "License policy does not allow this source",
+    "上游仓库已归档": "Upstream repository is archived",
+    "GitHub 未返回可识别的 SPDX 许可证。": "GitHub did not report a recognizable SPDX license.",
+    "上游仓库处于只读状态，可能不再获得维护或安全更新。": "The upstream repository is read-only and may no longer receive maintenance or security updates.",
     "MVP 不覆盖或更新现有 Skill，请先保留原目录并改用新的名称/来源。":
       "The MVP does not overwrite or update existing Skills. Preserve the original directory and use a new name or source.",
   };
@@ -187,8 +195,42 @@ export function localizeInstallerText(text: string, language: Language): string 
     [/^包含 (\d+) 个可执行脚本$/, (match) => `Contains ${match[1]} executable script${match[1] === "1" ? "" : "s"}`],
     [/^将从 github\.com\/(.+) 的 (.+) 引用读取 (\d+) 个文件。$/, (match) => `Will read ${match[3]} files from github.com/${match[1]} at ref ${match[2]}.`],
     [/^上限为 (\d+) 个文件和 20 MB；当前为 (\d+) 个文件、(\d+) 字节。$/, (match) => `The limit is ${match[1]} files and 20 MB; this directory contains ${match[2]} files and ${match[3]} bytes.`],
+    [/^(.+) 未匹配可信仓库或作者。$/, (match) => `${match[1]} does not match a trusted repository or author.`],
+    [/^(.+) 不在许可证允许名单中。$/, (match) => `${match[1]} is not on the license allowlist.`],
   ];
 
+  for (const [pattern, translate] of patterns) {
+    const match = text.match(pattern);
+    if (match) return translate(match);
+  }
+  return text;
+}
+
+export function localizeLifecycleText(text: string, language: Language): string {
+  if (language === "zh") return text;
+
+  const exact: Record<string, string> = {
+    "本轮仅提供更新预览": "This round provides update preview only",
+    "不会下载覆盖、删除、停用或执行任何 Skill 文件。":
+      "No Skill files will be overwritten, deleted, disabled, or executed.",
+    "SKILL.md 已发生变化": "SKILL.md has changed",
+    "调用说明或元数据可能改变，后续更新前必须重新审查。":
+      "Invocation instructions or metadata may have changed and must be reviewed before a future update.",
+    "上游 Skill 元数据无效": "Upstream Skill metadata is invalid",
+    "上游 Skill 名称不匹配": "Upstream Skill name does not match",
+    "包含链接、子模块或不支持的本地条目": "Contains links, submodules, or unsupported local entries",
+    "文件数量或体积超过安全预览上限": "File count or size exceeds the safe preview limit",
+    "当前上限为 500 个文件和 20 MB。": "The current limit is 500 files and 20 MB.",
+    "检测到追踪后的本地改动": "Local changes detected after source tracking",
+    "未来执行更新前需要先备份，并明确处理本地改动。":
+      "A backup and an explicit local-change decision will be required before a future update.",
+  };
+  if (exact[text]) return exact[text];
+
+  const patterns: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
+    [/^(\d+) 个脚本将新增或改变$/, (match) => `${match[1]} script${match[1] === "1" ? "" : "s"} will be added or changed`],
+    [/^本地为 (.+)，上游声明为 (.+)。$/, (match) => `The local Skill is ${match[1]}, while upstream declares ${match[2]}.`],
+  ];
   for (const [pattern, translate] of patterns) {
     const match = text.match(pattern);
     if (match) return translate(match);

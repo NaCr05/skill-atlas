@@ -8,7 +8,7 @@ function hostName(value: string): string {
 export function assertLocalMutationRequest(request: Request): void {
   const host = request.headers.get("host") || "";
   if (!LOCAL_HOSTS.has(hostName(host))) {
-    throw new Error("仅接受来自 localhost 的变更请求。");
+    throw new SkillAtlasError("LOCAL_REQUEST_REJECTED");
   }
   const origin = request.headers.get("origin");
   if (origin) {
@@ -16,10 +16,11 @@ export function assertLocalMutationRequest(request: Request): void {
     try {
       originHost = new URL(origin).hostname.toLocaleLowerCase();
     } catch {
-      throw new Error("请求 Origin 无效。");
+      throw new SkillAtlasError("LOCAL_REQUEST_REJECTED");
     }
     if (!LOCAL_HOSTS.has(originHost)) {
-      throw new Error("已阻止非本机页面发起的变更请求。");
+      throw new SkillAtlasError("LOCAL_REQUEST_REJECTED");
     }
   }
 }
+import { SkillAtlasError } from "@/core/errors/skill-atlas-error";

@@ -1,0 +1,279 @@
+/* Dark console theme ------------------------------------------------------ */
+
+body {
+  background: var(--canvas);
+}
+
+.app-stage {
+  background-color: var(--canvas);
+  background-image:
+    radial-gradient(circle at 84% 3%, rgb(112 138 255 / 12%), transparent 30rem),
+    linear-gradient(rgb(255 255 255 / 1.4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 1.4%) 1px, transparent 1px);
+  background-position: 0 0, -1px -1px, -1px -1px;
+  background-size: auto, 40px 40px, 40px 40px;
+}
+
+.app-sidebar {
+  border-right-color: #1f2a3d;
+  background: linear-gradient(180deg, #0d1424 0%, var(--sidebar) 76%);
+  box-shadow: 12px 0 40px rgb(0 0 0 / 18%);
+}
+
+.app-sidebar .main-nav a[data-active="true"] {
+  border-color: rgb(139 162 255 / 28%);
+  background: linear-gradient(90deg, rgb(75 101 201 / 42%), rgb(75 101 201 / 20%));
+  box-shadow: inset 3px 0 0 var(--blue);
+}
+
+.sidebar-status {
+  border-color: #253149;
+  background: rgb(255 255 255 / 3.5%);
+}
+
+.button-primary {
+  color: #ffffff;
+  background: var(--blue-strong);
+  box-shadow: 0 10px 28px rgb(52 76 170 / 34%);
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #5873da;
+}
+
+.button-quiet,
+.search-box,
+.select-box {
+  border-color: var(--line);
+  background: rgb(21 29 45 / 88%);
+}
+
+.button-quiet:hover:not(:disabled),
+.icon-button:hover {
+  border-color: var(--line-dark);
+  background: #202a40;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #738199;
+  opacity: 1;
+}
+
+select option {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.workbench-stats article {
+  border-color: var(--line);
+  background: linear-gradient(145deg, rgb(25 34 53 / 98%), rgb(18 25 40 / 98%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+.scan-status {
+  border-color: var(--line);
+  background: #101827;
+}
+
+.task-finder {
+  border-color: var(--line);
+  background: var(--line);
+}
+
+.task-finder-main,
+.local-insights {
+  background: #101827;
+}
+
+.task-finder textarea,
+.task-recommendations button,
+.insight-metrics > div {
+  color: var(--ink);
+  border-color: var(--line);
+  background: #0f1726;
+}
+
+.task-finder textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgb(139 162 255 / 15%);
+}
+
+.personal-filter-row {
+  border-color: var(--line);
+  background: rgb(15 22 36 / 82%);
+}
+
+.personal-filter-row button[data-active="true"] {
+  color: var(--blue);
+  border-color: #384967;
+  background: #202a40;
+}
+
+.workbench-stats small,
+.field-label span,
+.manual-fields label span,
+.resource-table small,
+.file-list span,
+.file-total,
+.integration-list b,
+.rank-number,
+.market-card-copy small,
+.review-route span,
+.source-code,
+.compact-list-heading,
+.inspector-facts dt {
+  color: #8492aa;
+}
+
+.command-search {
+  border-color: #34425a;
+  background: rgb(18 25 40 / 96%);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 18%), inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+.command-search:focus-within,
+.search-box:focus-within,
+.select-box:focus-within,
+.prompt-dialog textarea:focus,
+.manual-fields input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgb(139 162 255 / 15%), 0 14px 40px rgb(0 0 0 / 20%);
+}
+
+.command-search kbd,
+.search-box kbd {
+  color: #9ba8bd;
+  border-color: #354159;
+  background: #0d1422;
+}
+
+.view-switcher {
+  border-color: var(--line);
+  background: #101725;
+}
+
+.view-switcher button[data-active="true"] {
+  color: var(--blue);
+  background: #202a40;
+  box-shadow: 0 5px 16px rgb(0 0 0 / 25%);
+}
+
+.filter-row {
+  border-color: var(--line);
+  background: rgb(15 22 36 / 82%);
+}
+
+.filter-row .select-box {
+  background: #151d2d;
+}
+
+.result-count {
+  background: #111827;
+}
+
+.inventory-workspace .skill-card,
+.skill-card {
+  color: var(--ink);
+  border-color: var(--line);
+  background: linear-gradient(180deg, rgb(25 34 53 / 98%), rgb(18 25 40 / 98%));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 3%), 0 8px 22px rgb(0 0 0 / 12%);
+}
+
+.inventory-workspace .skill-card:hover,
+.skill-card:hover {
+  border-color: #526482;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%), 0 16px 42px rgb(0 0 0 / 28%);
+}
+
+.inventory-workspace .skill-card[data-selected="true"] {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgb(139 162 255 / 14%), 0 18px 46px rgb(0 0 0 / 24%);
+}
+
+.status-badge {
+  color: #b7c1d2;
+}
+
+.skill-card-meta {
+  color: #8b98ae;
+  border-top-color: var(--line);
+}
+
+.skill-inspector {
+  border-color: #35435c;
+  background: linear-gradient(180deg, #182238 0%, #121a2a 100%);
+  box-shadow: 0 24px 64px rgb(0 0 0 / 32%), inset 0 1px 0 rgb(255 255 255 / 4%);
+}
+
+.inspector-facts {
+  background: var(--line);
+}
+
+.inspector-facts > div,
+.inspector-tags span {
+  background: #0f1726;
+}
+
+.inspector-personal-actions button,
+.personal-note textarea {
+  color: var(--ink);
+  border-color: var(--line);
+  background: #0f1726;
+}
+
+.inspector-personal-actions button[data-active="true"] {
+  color: #f4bd5d;
+  border-color: rgb(244 189 93 / 45%);
+  background: rgb(244 189 93 / 8%);
+}
+
+.inspector-tags span {
+  color: #a3afc2;
+  border-color: var(--line);
+}
+
+.compact-skill-list {
+  border-color: var(--line);
+  background: #121a2a;
+}
+
+.compact-list-heading {
+  background: #0f1624;
+}
+
+.compact-skill-row {
+  color: var(--ink);
+  border-bottom-color: var(--line);
+  background: #151d2d;
+}
+
+.compact-skill-row:hover {
+  background: #1b2539;
+}
+
+.compact-skill-row[data-selected="true"] {
+  background: #1e2942;
+}
+
+.empty-state,
+.scan-warnings {
+  background: rgb(21 29 45 / 64%);
+}
+
+.prompt-dialog,
+.installation-dialog,
+.detail-hero,
+.content-panel,
+.side-panel,
+.settings-panel {
+  border-color: var(--line);
+  background: rgb(21 29 45 / 97%);
+}
+
+.prompt-dialog textarea,
+.manual-fields input {
+  color: var(--ink);
+  border-color: var(--line);
+  background: #0e1523;
+}

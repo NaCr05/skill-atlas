@@ -1,0 +1,32 @@
+name: Windows installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: choco install innosetup --yes --no-progress
+      - run: npm run package:windows
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skill-atlas-windows-installer
+          path: dist/windows/installer/*.exe
+          if-no-files-found: error
+      - name: Attach installer to tagged GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/windows/installer/*.exe

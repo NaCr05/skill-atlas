@@ -1,9 +1,9 @@
 import type { Language } from "@/core/i18n";
 import { translatedSkillDescription, translatedTags, translatedUseCases } from "@/core/skill-translations";
-import type { SkillRecord } from "./types";
+import type { SkillSummary } from "./types";
 
-export interface SkillRecommendation {
-  skill: SkillRecord;
+export interface SkillRecommendation<TSkill extends SkillSummary = SkillSummary> {
+  skill: TSkill;
   score: number;
   reasons: string[];
 }
@@ -41,7 +41,7 @@ function textTokens(value: string): string[] {
     .filter((token) => !QUERY_STOPWORDS.has(token)))];
 }
 
-function corpus(skill: SkillRecord): { name: string; all: string } {
+function corpus(skill: SkillSummary): { name: string; all: string } {
   const name = `${skill.name.replaceAll("-", " ")} ${skill.displayName}`.toLocaleLowerCase();
   return {
     name,
@@ -49,12 +49,12 @@ function corpus(skill: SkillRecord): { name: string; all: string } {
   };
 }
 
-export function recommendSkills(
-  skills: SkillRecord[],
+export function recommendSkills<TSkill extends SkillSummary>(
+  skills: TSkill[],
   task: string,
   language: Language,
   limit = 5,
-): SkillRecommendation[] {
+): SkillRecommendation<TSkill>[] {
   const cleanTask = task.trim();
   if (!cleanTask) return [];
   const lowerTask = cleanTask.toLocaleLowerCase();
