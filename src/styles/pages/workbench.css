@@ -53,12 +53,20 @@
 }
 
 .sidebar-section-label {
-  margin: 48px 12px 11px;
+  margin: 26px 12px 10px;
   color: #70809f;
   font-family: "Cascadia Code", Consolas, monospace;
   font-size: 0.58rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.sidebar-nav-groups {
+  margin-top: 22px;
+}
+
+.sidebar-nav-group:first-child .sidebar-section-label {
+  margin-top: 0;
 }
 
 .app-sidebar .main-nav {
@@ -155,6 +163,22 @@
   line-height: 1.6;
 }
 
+.catalog-header {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.catalog-header h1 {
+  margin-top: 6px;
+  font-size: clamp(2rem, 3.2vw, 2.5rem);
+  letter-spacing: -0.03em;
+}
+
+.catalog-header p {
+  max-width: 760px;
+  font-size: 0.9rem;
+}
+
 .workbench-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -225,11 +249,24 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin: -10px 0 14px;
+  margin: 0 0 14px;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 5px;
   background: var(--paper);
+}
+
+.scan-summary strong {
+  font-family: Bahnschrift, "Microsoft YaHei UI", sans-serif;
+  font-size: 0.82rem;
+}
+
+.scan-summary span {
+  color: var(--green);
+}
+
+.scan-summary span[data-alert="true"] {
+  color: var(--amber);
 }
 
 .scan-status > div {
@@ -1156,6 +1193,12 @@
     padding: 0;
   }
 
+  .sidebar-nav-groups {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+
   .app-sidebar .main-nav {
     display: flex;
     justify-content: flex-end;
@@ -1217,6 +1260,12 @@
     display: none;
   }
 
+  .sidebar-nav-groups {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+  }
+
   .app-sidebar .main-nav {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1242,6 +1291,10 @@
 
   .workbench-header h1 {
     font-size: clamp(2.5rem, 14vw, 4rem);
+  }
+
+  .catalog-header h1 {
+    font-size: clamp(2rem, 11vw, 2.6rem);
   }
 
   .workbench-header .button {

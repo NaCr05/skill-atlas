@@ -1,12 +1,17 @@
-import "@xyflow/react/dist/style.css";
-
-import { SkillGraphClient } from "@/components/skill-graph-client";
-import { discoverSkills } from "@/core/skills/discover";
-import { summarizeSkillInventory } from "@/core/skills/summary";
+import { CatalogPage } from "@/components/catalog-page";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
-  const inventory = summarizeSkillInventory(await discoverSkills());
-  return <SkillGraphClient inventory={inventory} />;
+function firstValue(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] || "" : value || "";
+}
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const parameters = await searchParams;
+  const focusedSkillName = firstValue(parameters.skill).trim().slice(0, 80);
+  return <CatalogPage focusedSkillName={focusedSkillName} />;
 }

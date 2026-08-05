@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 test("global capability map keeps context while inspecting a Skill", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/graph");
 
   await expect(page.getByRole("heading", { name: "Skills 知识图谱" })).toBeVisible();
-  const primaryNavigation = page.getByRole("navigation", { name: "主导航" });
-  await expect(primaryNavigation.getByRole("link").first()).toHaveText("知识图谱");
+  const primaryNavigation = page.getByRole("navigation", { name: "工作区" });
+  await expect(primaryNavigation.getByRole("link").first()).toHaveText("技能目录");
   await expect(primaryNavigation.getByRole("link", { name: "知识图谱" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("button", { name: "全局地图" })).toHaveAttribute("data-active", "true");
   await expect(page.getByTestId("skill-atlas-core")).toBeVisible();
@@ -37,7 +37,7 @@ test("global capability map keeps context while inspecting a Skill", async ({ pa
 
 test("global capability map remains within a mobile viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/graph");
   await expect(page.getByRole("button", { name: "全局地图" })).toBeVisible();
   const dimensions = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
   expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);

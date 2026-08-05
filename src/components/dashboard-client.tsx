@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Clock3, Gauge, GitCompareArrows, Layers3, LayoutGrid, List, Pin, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Star, Trash2, Undo2 } from "lucide-react";
+import { Clock3, GitCompareArrows, LayoutGrid, List, Pin, RefreshCw, RotateCcw, Search, SlidersHorizontal, Star, Trash2, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -50,7 +50,6 @@ export function DashboardClient({
   const [rescanError, setRescanError] = useState("");
   const [removalSkill, setRemovalSkill] = useState<SkillSummary | null>(null);
   const [disableSkill, setDisableSkill] = useState<SkillSummary | null>(null);
-  const [trashCount, setTrashCount] = useState(0);
   const [updateRecords, setUpdateRecords] = useState<BatchUpdateRecord[]>([]);
   const [lastRemoval, setLastRemoval] = useState<SkillRemovalResult | null>(null);
   const [undoingRemoval, setUndoingRemoval] = useState(false);
@@ -69,23 +68,6 @@ export function DashboardClient({
     window.addEventListener("keydown", focusSearch);
     return () => window.removeEventListener("keydown", focusSearch);
   }, []);
-
-  useEffect(() => {
-    let active = true;
-    async function loadTrashCount() {
-      try {
-        const response = await fetch("/api/lifecycle/trash", { cache: "no-store", headers: { "X-Skill-Atlas-Language": language } });
-        const payload = (await response.json()) as { count?: number };
-        if (active && response.ok) setTrashCount(payload.count || 0);
-      } catch {
-        // Trash availability must not block the active inventory.
-      }
-    }
-    void loadTrashCount();
-    return () => {
-      active = false;
-    };
-  }, [language]);
 
   useEffect(() => {
     let active = true;
@@ -178,20 +160,10 @@ export function DashboardClient({
     }
   }
 
-  async function refreshTrashCount() {
-    try {
-      const response = await fetch("/api/lifecycle/trash", { cache: "no-store", headers: { "X-Skill-Atlas-Language": language } });
-      const payload = (await response.json()) as { count?: number };
-      if (response.ok) setTrashCount(payload.count || 0);
-    } catch {
-      // The inventory remains usable if the recoverable-trash count cannot load.
-    }
-  }
-
   async function removed(result: SkillRemovalResult) {
     setRemovalSkill(null);
     setLastRemoval(result);
-    await Promise.all([rescan(), refreshTrashCount()]);
+    await rescan();
   }
 
   async function disabled() {
@@ -202,7 +174,7 @@ export function DashboardClient({
 
   async function restored() {
     setLastRemoval(null);
-    await Promise.all([rescan(), refreshTrashCount()]);
+    await rescan();
   }
 
   async function undoRemoval() {
@@ -225,46 +197,20 @@ export function DashboardClient({
     }
   }
 
-  const structureValid = inventory.skills.filter((skill) => skill.structureStatus === "valid").length;
   const environmentReady = inventory.skills.filter((skill) => skill.environmentStatus === "ready").length;
-  const attention = inventory.skills.filter((skill) => skill.environmentStatus !== "ready").length;
+  const attention = inventory.skills.length - environmentReady;
   const scannedAt = new Date(inventory.scannedAt).toLocaleTimeString(localeFor(language), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   return (
     <>
-      <h2 className="sr-only" id="skill-status-overview">{t("能力状态概览", "Skill status overview")}</h2>
-      <section className="workbench-stats" aria-labelledby="skill-status-overview">
-        <article>
-          <span><Layers3 size={17} aria-hidden="true" /> {t("已发现", "Discovered")}</span>
-          <strong>{inventory.skills.length}</strong>
-          <small>{t("当前生效入口", "Active entries only")}</small>
-        </article>
-        <article>
-          <span><ShieldCheck size={17} aria-hidden="true" /> {t("结构有效", "Structure valid")}</span>
-          <strong>{structureValid}</strong>
-          <small>{t("元数据与目录可解析", "Metadata and directory parsed")}</small>
-        </article>
-        <article>
-          <span><Gauge size={17} aria-hidden="true" /> {t("基础环境就绪", "Base environment ready")}</span>
-          <strong>{environmentReady}</strong>
-          <small>{t("无缺失的必需 Skill 或外部工具声明", "No missing required Skills or declared external tools")}</small>
-        </article>
-        <article data-alert={attention > 0}>
-          <span><AlertTriangle size={17} aria-hidden="true" /> {t("需要确认", "Needs review")}</span>
-          <strong>{attention}</strong>
-          <small>{t("配置、工具或元数据待处理", "Setup, tools, or metadata need review")}</small>
-        </article>
-      </section>
-
       <div className="scan-status" role="status" aria-live="polite">
-        <div>
-          <span>{t("上次扫描", "Last scan")} {scannedAt}</span>
-          <small>{inventory.durationMs.toLocaleString(localeFor(language))} ms · {inventory.cache.hit ? t("来自缓存", "from cache") : t("磁盘扫描", "disk scan")}</small>
+        <div className="scan-summary">
+          <strong>{inventory.skills.length} Skills</strong>
+          <span>{environmentReady} {t("已就绪", "ready")}</span>
+          <span data-alert={attention > 0}>{attention} {t("待处理", "need attention")}</span>
+          <small>{t("扫描于", "Scanned at")} {scannedAt} · {inventory.durationMs.toLocaleString(localeFor(language))} ms · {inventory.cache.hit ? t("缓存", "cache") : t("磁盘", "disk")}</small>
         </div>
         <div className="scan-actions">
-          <Link className="button button-quiet" href="/trash">
-            <Trash2 size={15} aria-hidden="true" /> {t("回收站", "Trash")} <b>{trashCount}</b>
-          </Link>
           <button className="button button-quiet" type="button" onClick={() => void rescan()} disabled={rescanning}>
             <RefreshCw size={15} aria-hidden="true" className={rescanning ? "is-spinning" : undefined} />
             {rescanning ? t("正在扫描…", "Scanning…") : t("重新扫描", "Rescan")}

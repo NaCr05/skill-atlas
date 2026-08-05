@@ -6,14 +6,26 @@ import { usePathname } from "next/navigation";
 
 import { LanguageToggle, useLanguage } from "./language-provider";
 
-const navigation = [
-  { href: "/", zh: "知识图谱", en: "Knowledge graph", icon: Network },
-  { href: "/skills", zh: "本地技能", en: "Local Skills", icon: LayoutGrid },
-  { href: "/marketplace", zh: "技能市场", en: "Skill marketplace", icon: Store },
-  { href: "/operations", zh: "操作中心", en: "Operations", icon: ListChecks },
-  { href: "/trash", zh: "回收站", en: "Trash", icon: Trash2 },
-  { href: "/storage", zh: "备份与归档", en: "Backups & archives", icon: Archive },
-  { href: "/settings", zh: "环境设置", en: "Environment", icon: Settings },
+const navigationGroups = [
+  {
+    zh: "工作区",
+    en: "Workspace",
+    items: [
+      { href: "/", zh: "技能目录", en: "Skill catalog", icon: LayoutGrid },
+      { href: "/graph", zh: "知识图谱", en: "Knowledge graph", icon: Network },
+      { href: "/marketplace", zh: "技能市场", en: "Skill marketplace", icon: Store },
+    ],
+  },
+  {
+    zh: "管理",
+    en: "Manage",
+    items: [
+      { href: "/operations", zh: "操作中心", en: "Operations", icon: ListChecks },
+      { href: "/trash", zh: "回收站", en: "Trash", icon: Trash2 },
+      { href: "/storage", zh: "备份与归档", en: "Backups & archives", icon: Archive },
+      { href: "/settings", zh: "环境设置", en: "Environment", icon: Settings },
+    ],
+  },
 ];
 
 export function AppHeader() {
@@ -35,20 +47,26 @@ export function AppHeader() {
         </span>
       </Link>
 
-      <div className="sidebar-section-label">{t("工作区", "Workspace")}</div>
-      <nav className="main-nav" aria-label={t("主导航", "Primary navigation")}>
-        {navigation.map(({ href, zh, en, icon: Icon }) => {
-          const active = href === "/"
-            ? pathname === "/" || pathname.startsWith("/graph")
-            : pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link key={href} href={href} data-active={active} aria-current={active ? "page" : undefined} aria-label={t(zh, en)}>
-              <Icon size={18} aria-hidden="true" />
-              <span>{t(zh, en)}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <div className="sidebar-nav-groups">
+        {navigationGroups.map((group) => (
+          <section className="sidebar-nav-group" key={group.en} aria-labelledby={`sidebar-${group.en.toLocaleLowerCase()}`}>
+            <div className="sidebar-section-label" id={`sidebar-${group.en.toLocaleLowerCase()}`}>{t(group.zh, group.en)}</div>
+            <nav className="main-nav" aria-label={t(group.zh, group.en)}>
+              {group.items.map(({ href, zh, en, icon: Icon }) => {
+                const active = href === "/"
+                  ? pathname === "/" || pathname.startsWith("/skills")
+                  : pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link key={href} href={href} data-active={active} aria-current={active ? "page" : undefined} aria-label={t(zh, en)}>
+                    <Icon size={18} aria-hidden="true" />
+                    <span>{t(zh, en)}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </section>
+        ))}
+      </div>
 
       <LanguageToggle />
 

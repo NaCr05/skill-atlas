@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await page.goto("/skills");
-  await expect(page.getByRole("heading", { name: /我的技能/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /技能目录/ })).toBeVisible();
   const viewSwitcher = page.locator(".view-switcher");
   await expect(viewSwitcher.getByRole("button").nth(0)).toHaveAccessibleName("紧凑视图");
   await expect(viewSwitcher.getByRole("button", { name: "紧凑视图" })).toHaveAttribute("data-active", "true");
@@ -11,13 +11,13 @@ test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await expect(page.getByText("本地中文摘要").first()).toBeVisible();
   await expect(page.getByText(/“ready-skill”技能用于创建/).first()).toBeVisible();
   await expect(page.getByText(/Creates concise release notes/)).toBeHidden();
-  await expect(page.getByText("结构有效", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("基础环境就绪", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/上次扫描/)).toBeVisible();
+  await expect(page.locator(".scan-summary")).toContainText("Skills");
+  await expect(page.locator(".scan-summary")).toContainText("已就绪");
+  await expect(page.getByText(/扫描于/)).toBeVisible();
 
   await page.getByRole("button", { name: "重新扫描" }).click();
   await expect(page.getByRole("button", { name: "重新扫描" })).toBeEnabled();
-  await expect(page.getByText(/磁盘扫描/)).toBeVisible();
+  await expect(page.locator(".scan-summary")).toContainText("磁盘");
 
   await page.getByPlaceholder("搜索名称、功能或标签…").fill("explicit");
   await expect(page.getByRole("heading", { name: "Explicit Interview" })).toBeVisible();
@@ -209,7 +209,7 @@ test("personal Skills use a reviewed, recoverable removal flow", async ({ page }
   await removal.getByLabel(/我确认把这个完整 Skill 目录/).check();
   await removal.getByRole("button", { name: "确认移到回收站" }).click();
   await expect(page.getByText(/已移到可恢复的 Skill 回收站/)).toBeVisible();
-  await expect(page.getByRole("link", { name: /回收站 1/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "查看回收站" })).toBeVisible();
 
   await Promise.all([
     page.waitForURL(/\/trash$/),
@@ -546,7 +546,7 @@ test("mobile layout has no horizontal overflow", async ({ page }) => {
   expect(chineseOverflow).toBeLessThanOrEqual(1);
 
   await page.getByRole("button", { name: "切换到英文" }).click();
-  await expect(page.getByRole("heading", { name: "My Skills" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Skill Catalog" })).toBeVisible();
   const englishOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(englishOverflow).toBeLessThanOrEqual(1);
 
@@ -559,9 +559,9 @@ test("language switch updates the interface and persists across navigation", asy
   await page.goto("/skills");
   await page.getByRole("button", { name: "切换到英文" }).click();
 
-  await expect(page.getByRole("heading", { name: "My Skills" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Skill Catalog" })).toBeVisible();
   await expect(page.getByPlaceholder("Search by name, capability, or tag…")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Local Skills/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Skill catalog/ })).toBeVisible();
   await page.getByRole("button", { name: "Card view" }).click();
   await expect(page.getByText(/Creates concise release notes/).first()).toBeVisible();
   await expect(page.getByText("本地中文摘要").first()).toBeHidden();
