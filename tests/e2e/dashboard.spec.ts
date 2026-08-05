@@ -19,7 +19,7 @@ test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await expect(page.getByRole("button", { name: "重新扫描" })).toBeEnabled();
   await expect(page.locator(".scan-summary")).toContainText("磁盘");
 
-  await page.getByPlaceholder("搜索名称、功能或标签…").fill("explicit");
+  await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("explicit");
   await expect(page.getByRole("heading", { name: "Explicit Interview" })).toBeVisible();
   const promptTrigger = page.locator(".skill-inspector .button-primary.button-wide");
   await promptTrigger.click();
@@ -194,7 +194,7 @@ test("personal Skills use a reviewed, recoverable removal flow", async ({ page }
   });
 
   await page.goto("/skills");
-  await page.getByPlaceholder("搜索名称、功能或标签…").fill("ready-skill");
+  await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
   await page.locator(".compact-skill-row").click();
   const removalTrigger = page.locator(".skill-inspector .button-danger-quiet");
   await removalTrigger.click();
@@ -224,7 +224,7 @@ test("personal Skills use a reviewed, recoverable removal flow", async ({ page }
   await expect(trash.getByText("回收站为空")).toBeVisible();
 
   await page.goto("/skills");
-  await page.getByPlaceholder("搜索名称、功能或标签…").fill("ready-skill");
+  await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
   await page.locator(".compact-skill-row").click();
   await page.locator(".skill-inspector").getByRole("button", { name: "移到回收站" }).click();
   const secondRemoval = page.getByRole("dialog", { name: /移到 Skill 回收站/ });
@@ -283,7 +283,7 @@ test("personal Skills can be disabled and re-enabled in place", async ({ page })
   }) }));
 
   await page.goto("/skills");
-  await page.getByPlaceholder("搜索名称、功能或标签…").fill("ready-skill");
+  await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
   await page.locator(".compact-skill-row").click();
   const trigger = page.locator(".skill-inspector").getByRole("button", { name: "停用 Skill" });
   await trigger.click();
@@ -310,7 +310,7 @@ test("task recommendation and personal workspace remain local", async ({ page, c
 
   await taskInput.fill("帮我写一份发布说明和更新日志");
   await page.getByRole("button", { name: "推荐技能" }).click();
-  const recommendation = page.locator(".task-recommendations").getByRole("button", { name: /ready-skill/ });
+  const recommendation = page.locator(".catalog-result-groups").getByRole("option", { name: /ready-skill/ });
   await expect(recommendation).toBeVisible();
   await recommendation.click();
 
@@ -496,7 +496,7 @@ test("market result starts the same review-and-install checkpoint directly", asy
 
 test("installed Skill focus link filters and selects the requested Skill", async ({ page }) => {
   await page.goto("/skills?skill=ready-skill#inventory");
-  await expect(page.getByRole("searchbox", { name: /搜索技能/ })).toHaveValue("ready-skill");
+  await expect(page.getByRole("combobox", { name: /搜索技能/ })).toHaveValue("ready-skill");
   await expect(page.locator(".skill-inspector").getByRole("heading", { name: "ready-skill" })).toBeVisible();
 });
 
@@ -560,7 +560,7 @@ test("language switch updates the interface and persists across navigation", asy
   await page.getByRole("button", { name: "切换到英文" }).click();
 
   await expect(page.getByRole("heading", { name: "Skill Catalog" })).toBeVisible();
-  await expect(page.getByPlaceholder("Search by name, capability, or tag…")).toBeVisible();
+  await expect(page.getByPlaceholder("Search Skills, or describe what you want to accomplish…")).toBeVisible();
   await expect(page.getByRole("link", { name: /Skill catalog/ })).toBeVisible();
   await page.getByRole("button", { name: "Card view" }).click();
   await expect(page.getByText(/Creates concise release notes/).first()).toBeVisible();

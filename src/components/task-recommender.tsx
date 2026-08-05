@@ -7,6 +7,7 @@ import {
   Check,
   Clock3,
   Copy,
+  Search,
   SearchX,
   Store,
   Sparkles,
@@ -14,7 +15,7 @@ import {
   Workflow,
 } from "lucide-react";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   AiAssistResponse,
@@ -39,8 +40,10 @@ import type { MarketplaceResponse, MarketplaceSkill } from "@/core/marketplaces/
 import { selectMarketCandidates } from "@/core/marketplaces/candidates";
 import { translatedMarketplaceDescription } from "@/core/skill-translations";
 import { recommendSkills } from "@/core/skills/recommend";
+import { catalogResultGroups } from "@/core/skills/catalog";
 import type { SkillSummary } from "@/core/skills/types";
 import { aiAssistErrorText, requestAiAssist } from "./ai-assist-client";
+import { CatalogResultGroups } from "./catalog-result-groups";
 import { DiscoveryHistoryRail } from "./discovery-history-rail";
 import { InstallationReview } from "./installation-review";
 import { InstallationSuccess } from "./installation-success";
@@ -72,17 +75,25 @@ function formatHistoryTimestamp(timestamp: string, language: "zh" | "en"): strin
 export function TaskRecommender({
   skills,
   workspace,
+  query,
+  onQueryChange,
+  searchInputRef,
   onSelect,
   onClear,
 }: {
   skills: SkillSummary[];
   workspace: LocalWorkspaceState;
+  query: string;
+  onQueryChange: (query: string) => void;
+  searchInputRef: RefObject<HTMLInputElement | null>;
   onSelect: (skill: SkillSummary) => void;
   onClear: () => void;
 }) {
   const { language, t } = useLanguage();
-  const [task, setTask] = useState("");
+  const task = query;
+  const setTask = onQueryChange;
   const [submitted, setSubmitted] = useState(false);
+  const [activeResultIndex, setActiveResultIndex] = useState(-1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [aiRecommendation, setAiRecommendation] = useState<AiAssistResponse<"task-recommendation"> | null>(null);
   const [composition, setComposition] = useState<AiAssistResponse<"skill-composition"> | null>(null);
@@ -103,20 +114,28 @@ export function TaskRecommender({
   const [copied, setCopied] = useState(false);
   const [discoveryHistory, setDiscoveryHistory] = useState(emptyDiscoveryHistory);
   const requests = useLatestRequests();
+  const restoredHistory = useRef(false);
   const median = useMemo(() => medianCopyJourneyMs(workspace), [workspace]);
   const recommendations = useMemo(
-    () => submitted ? recommendSkills(skills, task, language) : [],
-    [language, skills, submitted, task],
+    () => recommendSkills(skills, task, language),
+    [language, skills, task],
   );
+  const resultGroups = useMemo(
+    () => catalogResultGroups(skills, task, language, workspace.recentCopies.map((item) => item.skillId)),
+    [language, skills, task, workspace.recentCopies],
+  );
+  const flattenedResults = useMemo(() => resultGroups.flatMap((group) => group.items), [resultGroups]);
   const byName = useMemo(() => new Map(skills.map((skill) => [skill.name, skill])), [skills]);
 
   useEffect(() => {
+    if (restoredHistory.current) return;
+    restoredHistory.current = true;
     const restore = () => {
       const history = readDiscoveryHistory();
-      const draft = history.taskDraft;
+      const draft = task || history.taskDraft;
       const restored = history.taskEntries.find((entry) => entry.query === draft);
       setDiscoveryHistory(history);
-      setTask(draft);
+      if (!task) setTask(draft);
       if (!restored) return;
       setSubmitted(true);
       setAiRecommendation(restored.aiResponse || null);
@@ -129,7 +148,7 @@ export function TaskRecommender({
       }).slice(0, 5));
     };
     restore();
-  }, [byName, language, skills]);
+  }, [byName, language, setTask, skills, task]);
 
   function resetAiResults() {
     setAiRecommendation(null);
@@ -375,13 +394,22 @@ export function TaskRecommender({
     <section className="task-finder" aria-labelledby="task-finder-title">
       <div className="task-finder-main">
         <div className="task-finder-heading">
-          <span id="task-finder-title"><Sparkles size={16} aria-hidden="true" /> {t("按任务找 Skill", "Find by task")}</span>
-          <small>{t("本地推荐免费且即时；AI 深度推荐只在点击后调用", "Local recommendations are instant; AI runs only when clicked")}</small>
+          <span id="task-finder-title"><Sparkles size={16} aria-hidden="true" /> {t("查找 Skill", "Find a Skill")}</span>
+          <small>{t("输入名称、功能或任务；本地结果即时生成，AI 与市场仅在点击后调用", "Enter a name, capability, or task. Local results are instant; AI and market search run only when clicked.")}</small>
         </div>
         <form onSubmit={submit}>
-          <label htmlFor="task-description" className="sr-only">{t("任务描述", "Task description")}</label>
-          <textarea
-            id="task-description"
+          <label htmlFor="catalog-command-input" className="sr-only">{t("任务描述：搜索技能或描述任务", "Task description: search Skills or describe a task")}</label>
+          <div className="catalog-command-input-wrap">
+            <Search size={19} aria-hidden="true" />
+            <input
+            ref={searchInputRef}
+            id="catalog-command-input"
+            type="search"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls="catalog-command-results"
+            aria-expanded={resultGroups.length > 0}
+            aria-activedescendant={activeResultIndex >= 0 ? `catalog-option-${flattenedResults[activeResultIndex]?.skill.id}` : undefined}
             value={task}
             onChange={(event) => {
               const value = event.target.value;
@@ -389,15 +417,32 @@ export function TaskRecommender({
               setAiWorking(null);
               setMarketSearching(false);
               setTask(value);
+              setActiveResultIndex(-1);
               setDiscoveryHistory(saveTaskDraft(value));
               setSubmitted(false);
               setSelectedIds([]);
               resetAiResults();
               resetMarketResults();
             }}
-            placeholder={t("例如：检查 React 页面在移动端的可访问性，并按优先级给出修改建议。", "For example: Review a React page for mobile accessibility and prioritize improvements.")}
-            rows={2}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown" && flattenedResults.length) {
+                event.preventDefault();
+                setActiveResultIndex((current) => Math.min(flattenedResults.length - 1, current + 1));
+              } else if (event.key === "ArrowUp" && flattenedResults.length) {
+                event.preventDefault();
+                setActiveResultIndex((current) => Math.max(0, current <= 0 ? flattenedResults.length - 1 : current - 1));
+              } else if (event.key === "Enter" && activeResultIndex >= 0) {
+                event.preventDefault();
+                const active = flattenedResults[activeResultIndex];
+                if (active) onSelect(active.skill);
+              } else if (event.key === "Escape") {
+                setActiveResultIndex(-1);
+              }
+            }}
+            placeholder={t("搜索 Skill，或描述你想完成的任务…", "Search Skills, or describe what you want to accomplish…")}
           />
+            <kbd>Ctrl K</kbd>
+          </div>
           <div className="task-action-stack">
             <button className="button button-quiet" type="submit" disabled={!task.trim()}>
               {t("推荐技能", "Recommend Skills")} <ArrowRight size={15} aria-hidden="true" />
@@ -406,6 +451,9 @@ export function TaskRecommender({
               <WandSparkles size={15} aria-hidden="true" />
               {aiWorking === "recommend" ? t("AI 分析中…", "AI analyzing…") : t("AI 深度推荐", "AI deep match")}
             </button>
+            <Link className="button button-market" href={task.trim() ? `/marketplace?q=${encodeURIComponent(task.trim())}` : "/marketplace"}>
+              <Store size={15} aria-hidden="true" /> {t("搜索市场", "Search marketplace")}
+            </Link>
           </div>
         </form>
 
@@ -429,19 +477,14 @@ export function TaskRecommender({
           onClear={() => setDiscoveryHistory(clearTaskDiscovery())}
         />
 
-        {recommendations.length > 0 && !aiRecommendation && (
-          <div className="task-recommendations" aria-label={t("本地推荐结果", "Local recommendations")}>
-            {recommendations.map((recommendation) => (
-              <article key={recommendation.skill.id} data-selected={selectedIds.includes(recommendation.skill.id)}>
-                <button type="button" className="task-skill-open" onClick={() => onSelect(recommendation.skill)}>
-                  <strong>{recommendation.skill.displayName}</strong>
-                  <code>${recommendation.skill.name}</code>
-                  <small>{recommendation.reasons.length ? recommendation.reasons.join(" · ") : t("任务关键词匹配", "Task keyword match")}</small>
-                </button>
-                <label><input type="checkbox" checked={selectedIds.includes(recommendation.skill.id)} onChange={() => toggleSelected(recommendation.skill.id)} /> {t("加入组合", "Add to flow")}</label>
-              </article>
-            ))}
-          </div>
+        {resultGroups.length > 0 && !aiRecommendation && (
+          <CatalogResultGroups
+            groups={resultGroups}
+            activeSkillId={flattenedResults[activeResultIndex]?.skill.id}
+            selectedIds={selectedIds}
+            onOpen={onSelect}
+            onToggle={toggleSelected}
+          />
         )}
 
         {submitted && task.trim() && recommendations.length === 0 && !aiRecommendation && (

@@ -1,16 +1,15 @@
 "use client";
 
-import { Clock3, GitCompareArrows, LayoutGrid, List, Pin, RefreshCw, RotateCcw, Search, SlidersHorizontal, Star, Trash2, Undo2 } from "lucide-react";
+import { Clock3, GitCompareArrows, LayoutGrid, List, Pin, RefreshCw, RotateCcw, SlidersHorizontal, Star, Trash2, Undo2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { environmentStatusLabel, localeFor, localizeGeneratedText, sourceLabel, statusLabel, structureStatusLabel } from "@/core/i18n";
-import { recordZeroResultSearch } from "@/core/local-workspace";
+import { localeFor, localizeGeneratedText, sourceLabel } from "@/core/i18n";
 import type { SkillRemovalResult, SkillRestoreResult } from "@/core/lifecycle/types";
 import type { BatchUpdateOverview, BatchUpdateRecord } from "@/core/lifecycle/update-batch";
-import { translatedSkillDescription, translatedTags, translatedUseCases } from "@/core/skill-translations";
-import type { SkillEnvironmentStatus, SkillInventorySummary, SkillStatus, SkillStructureStatus, SkillSummary } from "@/core/skills/types";
+import { catalogHealthBucket, catalogQuerySkillIds } from "@/core/skills/catalog";
+import type { SkillInventorySummary, SkillSummary } from "@/core/skills/types";
 import { useLanguage } from "./language-provider";
 import { PromptDialog } from "./prompt-dialog";
 import { SkillCard } from "./skill-card";
@@ -22,7 +21,7 @@ import { TaskRecommender } from "./task-recommender";
 import { useLocalWorkspace } from "./use-local-workspace";
 
 type ViewMode = "cards" | "compact";
-type StatusFilter = "all" | "updates" | SkillStatus | `structure:${SkillStructureStatus}` | `environment:${SkillEnvironmentStatus}` | "source:locked" | "source:unlocked" | "source:trusted" | "source:unlisted" | "source:archived";
+type StatusFilter = "all" | "ready" | "review" | "setup" | "updates" | "source:locked" | "source:unlocked" | "source:trusted" | "source:unlisted" | "source:archived";
 type CollectionFilter = "all" | "pinned" | "favorites" | "recent";
 
 export function DashboardClient({
@@ -79,26 +78,19 @@ export function DashboardClient({
   }, [language]);
 
   const filtered = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
+    const querySkillIds = catalogQuerySkillIds(inventory.skills, query, language);
     const recentRank = new Map(workspace.recentCopies.map((item, index) => [item.skillId, index]));
     return inventory.skills.filter((skill) => {
-      const matchesQuery =
-        !needle ||
-        `${skill.name} ${skill.displayName} ${skill.description} ${translatedSkillDescription(skill)} ${skill.tags.join(" ")} ${translatedTags(skill.tags).join(" ")} ${skill.useCases.join(" ")} ${translatedUseCases(skill).join(" ")}`
-          .toLocaleLowerCase()
-          .includes(needle);
+      const matchesQuery = querySkillIds.has(skill.id);
       const hasUpdate = updateRecords.some((record) => record.skillId === skill.id && ["update-available", "local-changes"].includes(record.status));
       const matchesStatus = status === "all"
         || (status === "updates" && hasUpdate)
+        || ((status === "ready" || status === "review" || status === "setup") && catalogHealthBucket(skill) === status)
         || (status === "source:locked" && skill.sourceTracking.status === "tracked")
         || (status === "source:unlocked" && skill.source.kind === "personal" && skill.sourceTracking.status === "untracked")
         || (status === "source:trusted" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.policyStatus === "trusted")
         || (status === "source:unlisted" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.policyStatus === "unlisted")
-        || (status === "source:archived" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.sourceTrust?.archived === true)
-        || (status.startsWith("structure:") && skill.structureStatus === status.slice("structure:".length))
-        || (status.startsWith("environment:") && skill.environmentStatus === status.slice("environment:".length))
-        || skill.status === status
-        || skill.secondaryStatuses.includes(status as SkillStatus);
+        || (status === "source:archived" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.sourceTrust?.archived === true);
       const matchesSource = source === "all" || skill.source.kind === source;
       const matchesCollection = collection === "all"
         || (collection === "pinned" && workspace.pinned.includes(skill.id))
@@ -121,7 +113,6 @@ export function DashboardClient({
   }
 
   function selectRecommendation(skill: SkillSummary) {
-    setQuery("");
     setStatus("all");
     setSource("all");
     setCollection("all");
@@ -197,7 +188,7 @@ export function DashboardClient({
     }
   }
 
-  const environmentReady = inventory.skills.filter((skill) => skill.environmentStatus === "ready").length;
+  const environmentReady = inventory.skills.filter((skill) => catalogHealthBucket(skill) === "ready").length;
   const attention = inventory.skills.length - environmentReady;
   const scannedAt = new Date(inventory.scannedAt).toLocaleTimeString(localeFor(language), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
@@ -230,25 +221,17 @@ export function DashboardClient({
         </div>
       )}
 
-      <TaskRecommender skills={inventory.skills} workspace={workspace} onSelect={selectRecommendation} onClear={clearWorkspace} />
+      <TaskRecommender
+        skills={inventory.skills}
+        workspace={workspace}
+        query={query}
+        onQueryChange={setQuery}
+        searchInputRef={searchRef}
+        onSelect={selectRecommendation}
+        onClear={clearWorkspace}
+      />
 
       <section className="workbench-controls" aria-label={t("查找和筛选技能", "Find and filter Skills")}>
-        <label className="command-search">
-          <Search size={20} aria-hidden="true" />
-          <span className="sr-only">{t("搜索技能", "Search Skills")}</span>
-          <input
-            ref={searchRef}
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && query.trim() && filtered.length === 0) recordZeroResultSearch(query, "inventory");
-            }}
-            placeholder={t("搜索名称、功能或标签…", "Search by name, capability, or tag…")}
-          />
-          <kbd>Ctrl K</kbd>
-        </label>
-
         <div className="view-switcher" aria-label={t("切换列表样式", "Change list view")}>
           <button type="button" data-active={view === "compact"} onClick={() => setView("compact")} aria-label={t("紧凑视图", "Compact view")}>
             <List size={18} aria-hidden="true" /> <span>{t("紧凑", "Compact")}</span>
@@ -273,22 +256,15 @@ export function DashboardClient({
             <span className="sr-only">{t("状态", "Status")}</span>
             <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter) }>
               <option value="all">{t("全部状态", "All statuses")}</option>
+              <option value="ready">{t("已就绪", "Ready")}</option>
+              <option value="review">{t("需要审查", "Needs review")}</option>
+              <option value="setup">{t("需要配置", "Needs setup")}</option>
               <option value="updates">{t(`有更新 (${updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length})`, `Updates available (${updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length})`)}</option>
               <option value="source:locked">{t("来源已锁定", "Source locked")}</option>
               <option value="source:unlocked">{t("来源未锁定", "Source unlocked")}</option>
               <option value="source:trusted">{t("来源在信任名单", "Trusted source")}</option>
               <option value="source:unlisted">{t("来源未列入信任名单", "Unlisted source")}</option>
               <option value="source:archived">{t("上游仓库已归档", "Archived upstream")}</option>
-              <option value="structure:valid">{structureStatusLabel("valid", language)}</option>
-              <option value="environment:ready">{environmentStatusLabel("ready", language)}</option>
-              <option value="environment:unverified">{environmentStatusLabel("unverified", language)}</option>
-              <option value="environment:needs-setup">{environmentStatusLabel("needs-setup", language)}</option>
-              <option value="usable">{statusLabel("usable", language)}</option>
-              <option value="explicit-only">{statusLabel("explicit-only", language)}</option>
-              <option value="conditional">{statusLabel("conditional", language)}</option>
-              <option value="missing-dependency">{statusLabel("missing-dependency", language)}</option>
-              <option value="invalid-metadata">{statusLabel("invalid-metadata", language)}</option>
-              <option value="duplicate">{statusLabel("duplicate", language)}</option>
             </select>
           </label>
           <Link className="button button-quiet" href="/operations"><GitCompareArrows size={14} /> {t("批量检查", "Batch check")}</Link>
