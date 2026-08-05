@@ -5,6 +5,7 @@ import {
   loadRuntimeAiSettings,
   saveRuntimeAiSettings,
 } from "@/core/ai/runtime-config";
+import { apiErrorResponse, SkillAtlasError } from "@/core/errors/skill-atlas-error";
 import { assertLocalMutationRequest } from "@/core/security/local-request";
 
 export const runtime = "nodejs";
@@ -26,16 +27,16 @@ const updateSchema = z.object({
   }),
 });
 
-function json(data: unknown, status = 200): Response {
-  return Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
+function json(data: unknown): Response {
+  return Response.json(data, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function GET(request: Request) {
   try {
     assertLocalMutationRequest(request);
     return json(await loadRuntimeAiSettings().then((result) => result.summary));
-  } catch {
-    return json({ error: "AI_SETTINGS_UNAVAILABLE" }, 400);
+  } catch (error) {
+    return apiErrorResponse(request, error, "AI_SETTINGS_UNAVAILABLE", 400);
   }
 }
 
@@ -45,7 +46,9 @@ export async function POST(request: Request) {
     const update = updateSchema.parse(await request.json());
     return json(await saveRuntimeAiSettings(update));
   } catch (error) {
-    return json({ error: error instanceof z.ZodError ? "AI_SETTINGS_INVALID" : "AI_SETTINGS_SAVE_FAILED" }, error instanceof z.ZodError ? 400 : 500);
+    const safeError = error instanceof z.ZodError ? new SkillAtlasError("AI_SETTINGS_INVALID", { cause: error }) : error;
+    console.error("[ai-settings] save failed", safeError instanceof SkillAtlasError ? safeError.code : "AI_SETTINGS_SAVE_FAILED");
+    return apiErrorResponse(request, safeError, "AI_SETTINGS_SAVE_FAILED", error instanceof z.ZodError ? 400 : 500);
   }
 }
 
@@ -53,7 +56,7 @@ export async function DELETE(request: Request) {
   try {
     assertLocalMutationRequest(request);
     return json(await clearRuntimeAiSettings());
-  } catch {
-    return json({ error: "AI_SETTINGS_CLEAR_FAILED" }, 500);
+  } catch (error) {
+    return apiErrorResponse(request, error, "AI_SETTINGS_CLEAR_FAILED", 500);
   }
 }

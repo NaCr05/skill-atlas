@@ -579,6 +579,31 @@ test("AI provider settings can be saved in the page and survive a refresh", asyn
   }
 });
 
+test("AI provider settings show the safe server-side failure reason", async ({ page }) => {
+  await page.route("**/api/settings/ai", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.continue();
+      return;
+    }
+    await route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: JSON.stringify({
+        code: "AI_SETTINGS_ENCRYPTION_FAILED",
+        error: "Windows 无法加密 API Key。请确认 Windows PowerShell 可用，并从当前用户会话启动 Skill Atlas。",
+      }),
+    });
+  });
+
+  await page.goto("/settings");
+  await page.getByRole("radio", { name: /^DeepSeek / }).check();
+  await page.getByLabel("API Key").nth(1).fill("not-a-real-key");
+  await page.getByRole("button", { name: "保存 AI 连接" }).click();
+
+  await expect(page.getByText(/Windows 无法加密 API Key/)).toBeVisible();
+  await expect(page.getByText(/检查输入和本地环境后重试/)).toHaveCount(0);
+});
+
 test("mobile layout has no horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/skills");

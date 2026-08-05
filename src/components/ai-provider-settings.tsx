@@ -21,7 +21,7 @@ function providerName(provider?: AiProvider): string {
 }
 
 export function AiProviderSettings({ initialSummary }: { initialSummary: AiSettingsSummary }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const router = useRouter();
   const [summary, setSummary] = useState(initialSummary);
   const [selection, setSelection] = useState<ValidSelection>(initialSummary.selection === "invalid" ? "auto" : initialSummary.selection);
@@ -48,7 +48,7 @@ export function AiProviderSettings({ initialSummary }: { initialSummary: AiSetti
     try {
       const response = await fetch("/api/settings/ai", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Skill-Atlas-Language": language },
         body: JSON.stringify({
           selection,
           providers: Object.fromEntries(PROVIDERS.map(({ id }) => [id, {
@@ -58,15 +58,20 @@ export function AiProviderSettings({ initialSummary }: { initialSummary: AiSetti
           }])),
         }),
       });
-      const payload = await response.json() as AiSettingsSummary & { error?: string };
+      const payload = await response.json() as AiSettingsSummary & { code?: string; error?: string };
       if (!response.ok) throw new Error(payload.error || "AI_SETTINGS_SAVE_FAILED");
       setSummary(payload);
       setApiKeys({ openai: "", deepseek: "" });
       setClearKeys({ openai: false, deepseek: false });
       setMessage({ kind: "success", text: t("AI 连接已保存并立即生效。", "AI connection saved and active now.") });
       router.refresh();
-    } catch {
-      setMessage({ kind: "error", text: t("无法保存配置。请检查输入和本地环境后重试。", "Could not save the configuration. Check the fields and local environment, then try again.") });
+    } catch (error) {
+      setMessage({
+        kind: "error",
+        text: error instanceof Error
+          ? error.message
+          : t("无法保存 AI 配置。默认本地提示词仍然可用。", "AI settings could not be saved. The deterministic local Prompt remains available."),
+      });
     } finally {
       setWorking(false);
     }
