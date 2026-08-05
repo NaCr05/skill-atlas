@@ -319,9 +319,10 @@ test("task recommendation and personal workspace remain local", async ({ page, c
   await builder.getByRole("button", { name: "复制调用 Prompt" }).click();
   await expect(builder.getByRole("button", { name: /已复制/ })).toBeVisible();
 
-  await expect(page.locator(".personal-filter-row").getByRole("button", { name: /置顶 1/ })).toBeVisible();
-  await expect(page.locator(".personal-filter-row").getByRole("button", { name: /收藏 1/ })).toBeVisible();
-  await expect(page.locator(".personal-filter-row").getByRole("button", { name: /最近复制 1/ })).toBeVisible();
+  const catalogFilters = page.locator(".catalog-filter-panel");
+  await expect(catalogFilters.getByRole("button", { name: /置顶 1/ })).toBeVisible();
+  await expect(catalogFilters.getByRole("button", { name: /收藏 1/ })).toBeVisible();
+  await expect(catalogFilters.getByRole("button", { name: /最近复制 1/ })).toBeVisible();
   await expect(page.locator(".insight-metrics > div").filter({ hasText: "找到后到复制" }).locator("strong")).not.toHaveText("暂无数据");
 
   const localState = await page.evaluate(() => JSON.parse(localStorage.getItem("skill-atlas:workspace:v1") || "{}"));
@@ -329,10 +330,10 @@ test("task recommendation and personal workspace remain local", async ({ page, c
   expect(Object.values(localState.notes)).toContain("发布前检查变更范围和版本号");
 
   await page.reload();
-  await page.locator(".personal-filter-row").getByRole("button", { name: /收藏 1/ }).click();
+  await page.locator(".catalog-filter-panel").getByRole("button", { name: /收藏 1/ }).click();
   await page.locator(".catalog-personal-note").getByText(/个人备注/).click();
   await expect(page.locator(".catalog-personal-note").getByLabel("个人备注")).toHaveValue("发布前检查变更范围和版本号");
-  await expect(page.locator(".personal-filter-row").getByRole("button", { name: /最近复制 1/ })).toBeVisible();
+  await expect(page.locator(".catalog-filter-panel").getByRole("button", { name: /最近复制 1/ })).toBeVisible();
 });
 
 test("task history restores an AI result after navigating away without calling AI again", async ({ page }) => {

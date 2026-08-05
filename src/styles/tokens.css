@@ -19,6 +19,7 @@
   --shadow: 0 20px 56px rgb(0 0 0 / 36%);
   --surface-canvas: var(--canvas);
   --surface-panel: var(--paper);
+  --surface-raised: #1a2438;
   --surface-sidebar: var(--sidebar);
   --border-subtle: var(--line);
   --text-primary: var(--ink);
@@ -34,6 +35,8 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --radius-sm: 4px;
+  --radius-md: 7px;
   --focus-ring: 0 0 0 3px rgb(139 162 255 / 48%);
   --motion-fast: 140ms;
   --motion-standard: 220ms;

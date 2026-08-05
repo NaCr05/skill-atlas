@@ -1,24 +1,23 @@
 "use client";
 
-import { Clock3, GitCompareArrows, LayoutGrid, List, Pin, RefreshCw, RotateCcw, SlidersHorizontal, Star } from "lucide-react";
-import Link from "next/link";
+import { LayoutGrid, List, Pin, RefreshCw, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { localeFor, localizeGeneratedText, sourceLabel } from "@/core/i18n";
 import type { BatchUpdateOverview, BatchUpdateRecord } from "@/core/lifecycle/update-batch";
 import { catalogHealthBucket, catalogQuerySkillIds } from "@/core/skills/catalog";
 import type { SkillInventorySummary, SkillSummary } from "@/core/skills/types";
+import { CatalogFilterRail, type CatalogCollectionFilter, type CatalogStatusFilter } from "./catalog-filter-rail";
 import { CatalogPersonalNote } from "./catalog-personal-note";
 import { InvocationBuilder } from "./invocation-builder";
 import { useLanguage } from "./language-provider";
 import { SkillCard } from "./skill-card";
 import { StatusBadge } from "./status-badge";
 import { TaskRecommender } from "./task-recommender";
+import { ResponsiveBuilderShell } from "./responsive-builder-shell";
 import { useLocalWorkspace } from "./use-local-workspace";
 
 type ViewMode = "cards" | "compact";
-type StatusFilter = "all" | "ready" | "review" | "setup" | "updates" | "source:locked" | "source:unlocked" | "source:trusted" | "source:unlisted" | "source:archived";
-type CollectionFilter = "all" | "pinned" | "favorites" | "recent";
 
 export function DashboardClient({
   inventory: initialInventory,
@@ -31,9 +30,9 @@ export function DashboardClient({
   const initialFocusedSkill = initialInventory.skills.find((skill) => skill.name === initialFocusedSkillName);
   const [inventory, setInventory] = useState(initialInventory);
   const [query, setQuery] = useState(initialFocusedSkill?.name || "");
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const [status, setStatus] = useState<CatalogStatusFilter>("all");
   const [source, setSource] = useState("all");
-  const [collection, setCollection] = useState<CollectionFilter>("all");
+  const [collection, setCollection] = useState<CatalogCollectionFilter>("all");
   const [view, setView] = useState<ViewMode>("compact");
   const [selectedId, setSelectedId] = useState(
     initialFocusedSkill?.id ?? initialInventory.skills.find((skill) => skill.environmentStatus === "ready")?.id ?? initialInventory.skills[0]?.id ?? "",
@@ -42,6 +41,7 @@ export function DashboardClient({
   const [rescanError, setRescanError] = useState("");
   const [updateRecords, setUpdateRecords] = useState<BatchUpdateRecord[]>([]);
   const [selectedJourneyStartedAt, setSelectedJourneyStartedAt] = useState(() => Date.now());
+  const [builderOpen, setBuilderOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const { workspace, toggleFavorite, togglePinned, saveNote, clearWorkspace } = useLocalWorkspace();
 
@@ -99,6 +99,7 @@ export function DashboardClient({
   function selectSkill(skill: SkillSummary) {
     setSelectedId(skill.id);
     setSelectedJourneyStartedAt(Date.now());
+    setBuilderOpen(true);
   }
 
   function selectRecommendation(skill: SkillSummary) {
@@ -106,7 +107,7 @@ export function DashboardClient({
     setSource("all");
     setCollection("all");
     selectSkill(skill);
-    window.setTimeout(() => document.querySelector(".inventory-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    window.setTimeout(() => document.querySelector(".catalog-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
 
   function resetFilters() {
@@ -135,7 +136,12 @@ export function DashboardClient({
 
   const environmentReady = inventory.skills.filter((skill) => catalogHealthBucket(skill) === "ready").length;
   const attention = inventory.skills.length - environmentReady;
+  const updateCount = updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length;
   const scannedAt = new Date(inventory.scannedAt).toLocaleTimeString(localeFor(language), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const builderTask = selectedSkill && query.trim() && ![selectedSkill.name, selectedSkill.displayName, `$${selectedSkill.name}`]
+    .some((name) => name.toLocaleLowerCase() === query.trim().toLocaleLowerCase())
+    ? query.trim()
+    : "";
 
   return (
     <>
@@ -164,65 +170,37 @@ export function DashboardClient({
         onClear={clearWorkspace}
       />
 
-      <section className="workbench-controls" aria-label={t("查找和筛选技能", "Find and filter Skills")}>
-        <div className="view-switcher" aria-label={t("切换列表样式", "Change list view")}>
-          <button type="button" data-active={view === "compact"} onClick={() => setView("compact")} aria-label={t("紧凑视图", "Compact view")}>
-            <List size={18} aria-hidden="true" /> <span>{t("紧凑", "Compact")}</span>
-          </button>
-          <button type="button" data-active={view === "cards"} onClick={() => setView("cards")} aria-label={t("卡片视图", "Card view")}>
-            <LayoutGrid size={17} aria-hidden="true" /> <span>{t("卡片", "Cards")}</span>
-          </button>
-        </div>
+      <section className="catalog-workspace" data-view={view} aria-label={t("技能目录工作区", "Skill catalog workspace")}>
+        <CatalogFilterRail
+          status={status}
+          source={source}
+          collection={collection}
+          workspace={workspace}
+          updateCount={updateCount}
+          resultCount={filtered.length}
+          totalCount={inventory.skills.length}
+          hasFilters={hasFilters}
+          onStatusChange={setStatus}
+          onSourceChange={setSource}
+          onCollectionChange={setCollection}
+          onReset={resetFilters}
+        />
 
-        <div className="personal-filter-row" aria-label={t("个人整理筛选", "Personal organization filters")}>
-          <span>{t("我的整理", "My library")}</span>
-          <button type="button" data-active={collection === "all"} onClick={() => setCollection("all")}>{t("全部", "All")}</button>
-          <button type="button" data-active={collection === "pinned"} onClick={() => setCollection("pinned")}><Pin size={13} aria-hidden="true" /> {t("置顶", "Pinned")} <b>{workspace.pinned.length}</b></button>
-          <button type="button" data-active={collection === "favorites"} onClick={() => setCollection("favorites")}><Star size={13} aria-hidden="true" /> {t("收藏", "Favorites")} <b>{workspace.favorites.length}</b></button>
-          <button type="button" data-active={collection === "recent"} onClick={() => setCollection("recent")}><Clock3 size={13} aria-hidden="true" /> {t("最近复制", "Recently copied")} <b>{workspace.recentCopies.length}</b></button>
-          <small>{t("置顶技能会优先显示", "Pinned Skills are shown first")}</small>
-        </div>
+        <div className="catalog-results-column">
+          <header className="catalog-list-toolbar">
+            <div><strong>{t("本地 Skill", "Local Skills")}</strong><span>{t(`显示 ${filtered.length} / ${inventory.skills.length}`, `Showing ${filtered.length} / ${inventory.skills.length}`)}</span></div>
+            <div className="view-switcher" aria-label={t("切换列表样式", "Change list view")}>
+              <button type="button" data-active={view === "compact"} onClick={() => setView("compact")} aria-label={t("紧凑视图", "Compact view")}>
+                <List size={18} aria-hidden="true" /> <span>{t("紧凑", "Compact")}</span>
+              </button>
+              <button type="button" data-active={view === "cards"} onClick={() => setView("cards")} aria-label={t("卡片视图", "Card view")}>
+                <LayoutGrid size={17} aria-hidden="true" /> <span>{t("卡片", "Cards")}</span>
+              </button>
+            </div>
+          </header>
 
-        <div className="filter-row">
-          <span className="filter-label"><SlidersHorizontal size={15} aria-hidden="true" /> {t("筛选", "Filters")}</span>
-          <label className="select-box">
-            <span className="sr-only">{t("状态", "Status")}</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter) }>
-              <option value="all">{t("全部状态", "All statuses")}</option>
-              <option value="ready">{t("已就绪", "Ready")}</option>
-              <option value="review">{t("需要审查", "Needs review")}</option>
-              <option value="setup">{t("需要配置", "Needs setup")}</option>
-              <option value="updates">{t(`有更新 (${updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length})`, `Updates available (${updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length})`)}</option>
-              <option value="source:locked">{t("来源已锁定", "Source locked")}</option>
-              <option value="source:unlocked">{t("来源未锁定", "Source unlocked")}</option>
-              <option value="source:trusted">{t("来源在信任名单", "Trusted source")}</option>
-              <option value="source:unlisted">{t("来源未列入信任名单", "Unlisted source")}</option>
-              <option value="source:archived">{t("上游仓库已归档", "Archived upstream")}</option>
-            </select>
-          </label>
-          <Link className="button button-quiet" href="/operations"><GitCompareArrows size={14} /> {t("批量检查", "Batch check")}</Link>
-          <label className="select-box">
-            <span className="sr-only">{t("来源", "Source")}</span>
-            <select value={source} onChange={(event) => setSource(event.target.value)}>
-              <option value="all">{t("全部来源", "All sources")}</option>
-              <option value="personal">{t("个人", "Personal")}</option>
-              <option value="system">{t("系统", "System")}</option>
-              <option value="plugin">{t("插件", "Plugin")}</option>
-              <option value="compatibility">{t("兼容目录", "Compatibility")}</option>
-            </select>
-          </label>
-          {hasFilters && (
-            <button type="button" className="reset-filters" onClick={resetFilters}>
-              <RotateCcw size={14} aria-hidden="true" /> {t("清除", "Clear")}
-            </button>
-          )}
-          <output className="result-count">{t("显示", "Showing")} {filtered.length} / {inventory.skills.length}</output>
-        </div>
-      </section>
-
-      {filtered.length ? (
-        <section className="inventory-workspace" data-view={view} aria-label={t("技能工作区", "Skill workspace")}>
-          <div className="inventory-results">
+          {filtered.length ? (
+            <div className="inventory-results">
             {view === "cards" ? (
               <div className="skill-grid" aria-label={t("技能卡片列表", "Skill card list")}>
                 {filtered.map((skill) => (
@@ -265,30 +243,39 @@ export function DashboardClient({
                 ))}
               </div>
             )}
-          </div>
-          {selectedSkill && (
+            </div>
+          ) : (
+            <section className="empty-state">
+              <span>0</span>
+              <h2>{t("当前筛选没有结果", "No results for these filters")}</h2>
+              <p>{t("换一个关键词，或清除状态和来源筛选。", "Try another keyword or clear the status and source filters.")}</p>
+              <button className="button button-quiet" type="button" onClick={resetFilters}>{t("清除筛选", "Clear filters")}</button>
+            </section>
+          )}
+
+          {selectedSkill && <CatalogPersonalNote key={selectedSkill.id} skill={selectedSkill} note={workspace.notes[selectedSkill.id] || ""} onSave={saveNote} />}
+        </div>
+
+        {selectedSkill && (
+          <ResponsiveBuilderShell
+            labelledBy={`invocation-builder-${selectedSkill.id}`}
+            open={builderOpen}
+            onOpen={() => setBuilderOpen(true)}
+            onClose={() => setBuilderOpen(false)}
+          >
             <InvocationBuilder
               key={selectedSkill.id}
               skill={selectedSkill}
-              initialTask={query.trim() && ![selectedSkill.name, selectedSkill.displayName, `$${selectedSkill.name}`].some((name) => name.toLocaleLowerCase() === query.trim().toLocaleLowerCase()) ? query.trim() : ""}
+              initialTask={builderTask}
               journeyStartedAt={selectedJourneyStartedAt}
               favorite={workspace.favorites.includes(selectedSkill.id)}
               pinned={workspace.pinned.includes(selectedSkill.id)}
               onToggleFavorite={toggleFavorite}
               onTogglePinned={togglePinned}
             />
-          )}
-        </section>
-      ) : (
-        <section className="empty-state">
-          <span>0</span>
-          <h2>{t("当前筛选没有结果", "No results for these filters")}</h2>
-          <p>{t("换一个关键词，或清除状态和来源筛选。", "Try another keyword or clear the status and source filters.")}</p>
-          <button className="button button-quiet" type="button" onClick={resetFilters}>{t("清除筛选", "Clear filters")}</button>
-        </section>
-      )}
-
-      {selectedSkill && <CatalogPersonalNote key={selectedSkill.id} skill={selectedSkill} note={workspace.notes[selectedSkill.id] || ""} onSave={saveNote} />}
+          </ResponsiveBuilderShell>
+        )}
+      </section>
       {inventory.warnings.length > 0 && (
         <details className="scan-warnings">
           <summary>{t(`${inventory.warnings.length} 条扫描提示`, `${inventory.warnings.length} scan notices`)}</summary>
