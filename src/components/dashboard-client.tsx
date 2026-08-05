@@ -1,29 +1,23 @@
 "use client";
 
-import { AlertTriangle, Clock3, Gauge, GitCompareArrows, Layers3, LayoutGrid, List, Pin, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Star, Trash2, Undo2 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { LayoutGrid, List, Pin, RefreshCw, Star } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { environmentStatusLabel, localeFor, localizeGeneratedText, sourceLabel, statusLabel, structureStatusLabel } from "@/core/i18n";
-import { recordZeroResultSearch } from "@/core/local-workspace";
-import type { SkillRemovalResult, SkillRestoreResult } from "@/core/lifecycle/types";
+import { localeFor, localizeGeneratedText, sourceLabel } from "@/core/i18n";
 import type { BatchUpdateOverview, BatchUpdateRecord } from "@/core/lifecycle/update-batch";
-import { translatedSkillDescription, translatedTags, translatedUseCases } from "@/core/skill-translations";
-import type { SkillEnvironmentStatus, SkillInventorySummary, SkillStatus, SkillStructureStatus, SkillSummary } from "@/core/skills/types";
+import { catalogHealthBucket, catalogQuerySkillIds } from "@/core/skills/catalog";
+import type { SkillInventorySummary, SkillSummary } from "@/core/skills/types";
+import { CatalogFilterRail, type CatalogCollectionFilter, type CatalogStatusFilter } from "./catalog-filter-rail";
+import { CatalogPersonalNote } from "./catalog-personal-note";
+import { InvocationBuilder } from "./invocation-builder";
 import { useLanguage } from "./language-provider";
-import { PromptDialog } from "./prompt-dialog";
 import { SkillCard } from "./skill-card";
-import { SkillInspector } from "./skill-inspector";
-import { SkillDisableDialog } from "./skill-disable-dialog";
-import { SkillRemovalDialog } from "./skill-removal-dialog";
 import { StatusBadge } from "./status-badge";
 import { TaskRecommender } from "./task-recommender";
+import { ResponsiveBuilderShell } from "./responsive-builder-shell";
 import { useLocalWorkspace } from "./use-local-workspace";
 
 type ViewMode = "cards" | "compact";
-type StatusFilter = "all" | "updates" | SkillStatus | `structure:${SkillStructureStatus}` | `environment:${SkillEnvironmentStatus}` | "source:locked" | "source:unlocked" | "source:trusted" | "source:unlisted" | "source:archived";
-type CollectionFilter = "all" | "pinned" | "favorites" | "recent";
 
 export function DashboardClient({
   inventory: initialInventory,
@@ -33,29 +27,22 @@ export function DashboardClient({
   initialFocusedSkillName?: string;
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const initialFocusedSkill = initialInventory.skills.find((skill) => skill.name === initialFocusedSkillName);
   const [inventory, setInventory] = useState(initialInventory);
   const [query, setQuery] = useState(initialFocusedSkill?.name || "");
-  const [status, setStatus] = useState<StatusFilter>("all");
+  const [status, setStatus] = useState<CatalogStatusFilter>("all");
   const [source, setSource] = useState("all");
-  const [collection, setCollection] = useState<CollectionFilter>("all");
+  const [collection, setCollection] = useState<CatalogCollectionFilter>("all");
   const [view, setView] = useState<ViewMode>("compact");
   const [selectedId, setSelectedId] = useState(
     initialFocusedSkill?.id ?? initialInventory.skills.find((skill) => skill.environmentStatus === "ready")?.id ?? initialInventory.skills[0]?.id ?? "",
   );
-  const [promptSkill, setPromptSkill] = useState<SkillSummary | null>(null);
-  const [promptJourneyStartedAt, setPromptJourneyStartedAt] = useState<number>();
   const [rescanning, setRescanning] = useState(false);
   const [rescanError, setRescanError] = useState("");
-  const [removalSkill, setRemovalSkill] = useState<SkillSummary | null>(null);
-  const [disableSkill, setDisableSkill] = useState<SkillSummary | null>(null);
-  const [trashCount, setTrashCount] = useState(0);
   const [updateRecords, setUpdateRecords] = useState<BatchUpdateRecord[]>([]);
-  const [lastRemoval, setLastRemoval] = useState<SkillRemovalResult | null>(null);
-  const [undoingRemoval, setUndoingRemoval] = useState(false);
+  const [selectedJourneyStartedAt, setSelectedJourneyStartedAt] = useState(() => Date.now());
+  const [builderOpen, setBuilderOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
-  const journeyStarts = useRef(new Map<string, number>());
   const { workspace, toggleFavorite, togglePinned, saveNote, clearWorkspace } = useLocalWorkspace();
 
   useEffect(() => {
@@ -72,23 +59,6 @@ export function DashboardClient({
 
   useEffect(() => {
     let active = true;
-    async function loadTrashCount() {
-      try {
-        const response = await fetch("/api/lifecycle/trash", { cache: "no-store", headers: { "X-Skill-Atlas-Language": language } });
-        const payload = (await response.json()) as { count?: number };
-        if (active && response.ok) setTrashCount(payload.count || 0);
-      } catch {
-        // Trash availability must not block the active inventory.
-      }
-    }
-    void loadTrashCount();
-    return () => {
-      active = false;
-    };
-  }, [language]);
-
-  useEffect(() => {
-    let active = true;
     void fetch("/api/updates/batch", { cache: "no-store", headers: { "X-Skill-Atlas-Language": language } })
       .then(async (response) => response.ok ? await response.json() as BatchUpdateOverview : undefined)
       .then((payload) => { if (active && payload) setUpdateRecords(payload.records); })
@@ -97,26 +67,19 @@ export function DashboardClient({
   }, [language]);
 
   const filtered = useMemo(() => {
-    const needle = query.trim().toLocaleLowerCase();
+    const querySkillIds = catalogQuerySkillIds(inventory.skills, query, language);
     const recentRank = new Map(workspace.recentCopies.map((item, index) => [item.skillId, index]));
     return inventory.skills.filter((skill) => {
-      const matchesQuery =
-        !needle ||
-        `${skill.name} ${skill.displayName} ${skill.description} ${translatedSkillDescription(skill)} ${skill.tags.join(" ")} ${translatedTags(skill.tags).join(" ")} ${skill.useCases.join(" ")} ${translatedUseCases(skill).join(" ")}`
-          .toLocaleLowerCase()
-          .includes(needle);
+      const matchesQuery = querySkillIds.has(skill.id);
       const hasUpdate = updateRecords.some((record) => record.skillId === skill.id && ["update-available", "local-changes"].includes(record.status));
       const matchesStatus = status === "all"
         || (status === "updates" && hasUpdate)
+        || ((status === "ready" || status === "review" || status === "setup") && catalogHealthBucket(skill) === status)
         || (status === "source:locked" && skill.sourceTracking.status === "tracked")
         || (status === "source:unlocked" && skill.source.kind === "personal" && skill.sourceTracking.status === "untracked")
         || (status === "source:trusted" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.policyStatus === "trusted")
         || (status === "source:unlisted" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.policyStatus === "unlisted")
-        || (status === "source:archived" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.sourceTrust?.archived === true)
-        || (status.startsWith("structure:") && skill.structureStatus === status.slice("structure:".length))
-        || (status.startsWith("environment:") && skill.environmentStatus === status.slice("environment:".length))
-        || skill.status === status
-        || skill.secondaryStatuses.includes(status as SkillStatus);
+        || (status === "source:archived" && skill.sourceTracking.status === "tracked" && skill.sourceTracking.sourceTrust?.archived === true);
       const matchesSource = source === "all" || skill.source.kind === source;
       const matchesCollection = collection === "all"
         || (collection === "pinned" && workspace.pinned.includes(skill.id))
@@ -135,23 +98,16 @@ export function DashboardClient({
 
   function selectSkill(skill: SkillSummary) {
     setSelectedId(skill.id);
-    journeyStarts.current.set(skill.id, Date.now());
+    setSelectedJourneyStartedAt(Date.now());
+    setBuilderOpen(true);
   }
 
   function selectRecommendation(skill: SkillSummary) {
-    setQuery("");
     setStatus("all");
     setSource("all");
     setCollection("all");
     selectSkill(skill);
-    window.setTimeout(() => document.querySelector(".inventory-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-  }
-
-  function openPrompt(skill: SkillSummary) {
-    const startedAt = journeyStarts.current.get(skill.id) ?? Date.now();
-    journeyStarts.current.set(skill.id, startedAt);
-    setPromptJourneyStartedAt(startedAt);
-    setPromptSkill(skill);
+    window.setTimeout(() => document.querySelector(".catalog-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
 
   function resetFilters() {
@@ -178,93 +134,25 @@ export function DashboardClient({
     }
   }
 
-  async function refreshTrashCount() {
-    try {
-      const response = await fetch("/api/lifecycle/trash", { cache: "no-store", headers: { "X-Skill-Atlas-Language": language } });
-      const payload = (await response.json()) as { count?: number };
-      if (response.ok) setTrashCount(payload.count || 0);
-    } catch {
-      // The inventory remains usable if the recoverable-trash count cannot load.
-    }
-  }
-
-  async function removed(result: SkillRemovalResult) {
-    setRemovalSkill(null);
-    setLastRemoval(result);
-    await Promise.all([rescan(), refreshTrashCount()]);
-  }
-
-  async function disabled() {
-    setDisableSkill(null);
-    await rescan();
-    router.push("/trash");
-  }
-
-  async function restored() {
-    setLastRemoval(null);
-    await Promise.all([rescan(), refreshTrashCount()]);
-  }
-
-  async function undoRemoval() {
-    if (!lastRemoval) return;
-    setUndoingRemoval(true);
-    setRescanError("");
-    try {
-      const response = await fetch("/api/lifecycle/restore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Skill-Atlas-Language": language },
-        body: JSON.stringify({ trashId: lastRemoval.trashId }),
-      });
-      const payload = (await response.json()) as SkillRestoreResult & { error?: string };
-      if (!response.ok) throw new Error(payload.error || t("恢复失败", "Restore failed"));
-      await restored();
-    } catch (error) {
-      setRescanError(error instanceof Error ? error.message : t("恢复失败", "Restore failed"));
-    } finally {
-      setUndoingRemoval(false);
-    }
-  }
-
-  const structureValid = inventory.skills.filter((skill) => skill.structureStatus === "valid").length;
-  const environmentReady = inventory.skills.filter((skill) => skill.environmentStatus === "ready").length;
-  const attention = inventory.skills.filter((skill) => skill.environmentStatus !== "ready").length;
+  const environmentReady = inventory.skills.filter((skill) => catalogHealthBucket(skill) === "ready").length;
+  const attention = inventory.skills.length - environmentReady;
+  const updateCount = updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length;
   const scannedAt = new Date(inventory.scannedAt).toLocaleTimeString(localeFor(language), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const builderTask = selectedSkill && query.trim() && ![selectedSkill.name, selectedSkill.displayName, `$${selectedSkill.name}`]
+    .some((name) => name.toLocaleLowerCase() === query.trim().toLocaleLowerCase())
+    ? query.trim()
+    : "";
 
   return (
     <>
-      <h2 className="sr-only" id="skill-status-overview">{t("能力状态概览", "Skill status overview")}</h2>
-      <section className="workbench-stats" aria-labelledby="skill-status-overview">
-        <article>
-          <span><Layers3 size={17} aria-hidden="true" /> {t("已发现", "Discovered")}</span>
-          <strong>{inventory.skills.length}</strong>
-          <small>{t("当前生效入口", "Active entries only")}</small>
-        </article>
-        <article>
-          <span><ShieldCheck size={17} aria-hidden="true" /> {t("结构有效", "Structure valid")}</span>
-          <strong>{structureValid}</strong>
-          <small>{t("元数据与目录可解析", "Metadata and directory parsed")}</small>
-        </article>
-        <article>
-          <span><Gauge size={17} aria-hidden="true" /> {t("基础环境就绪", "Base environment ready")}</span>
-          <strong>{environmentReady}</strong>
-          <small>{t("无缺失的必需 Skill 或外部工具声明", "No missing required Skills or declared external tools")}</small>
-        </article>
-        <article data-alert={attention > 0}>
-          <span><AlertTriangle size={17} aria-hidden="true" /> {t("需要确认", "Needs review")}</span>
-          <strong>{attention}</strong>
-          <small>{t("配置、工具或元数据待处理", "Setup, tools, or metadata need review")}</small>
-        </article>
-      </section>
-
       <div className="scan-status" role="status" aria-live="polite">
-        <div>
-          <span>{t("上次扫描", "Last scan")} {scannedAt}</span>
-          <small>{inventory.durationMs.toLocaleString(localeFor(language))} ms · {inventory.cache.hit ? t("来自缓存", "from cache") : t("磁盘扫描", "disk scan")}</small>
+        <div className="scan-summary">
+          <strong>{inventory.skills.length} Skills</strong>
+          <span>{environmentReady} {t("已就绪", "ready")}</span>
+          <span data-alert={attention > 0}>{attention} {t("待处理", "need attention")}</span>
+          <small>{t("扫描于", "Scanned at")} {scannedAt} · {inventory.durationMs.toLocaleString(localeFor(language))} ms · {inventory.cache.hit ? t("缓存", "cache") : t("磁盘", "disk")}</small>
         </div>
         <div className="scan-actions">
-          <Link className="button button-quiet" href="/trash">
-            <Trash2 size={15} aria-hidden="true" /> {t("回收站", "Trash")} <b>{trashCount}</b>
-          </Link>
           <button className="button button-quiet" type="button" onClick={() => void rescan()} disabled={rescanning}>
             <RefreshCw size={15} aria-hidden="true" className={rescanning ? "is-spinning" : undefined} />
             {rescanning ? t("正在扫描…", "Scanning…") : t("重新扫描", "Rescan")}
@@ -272,102 +160,47 @@ export function DashboardClient({
         </div>
       </div>
       {rescanError && <p className="inline-error standalone">{rescanError}</p>}
-      {lastRemoval && (
-        <div className="removal-success" role="status">
-          <div><Trash2 size={17} /><span><strong>{lastRemoval.skillName}</strong> {t("已移到可恢复的 Skill 回收站。", "was moved to the recoverable Skill trash.")}</span></div>
-          <div>
-            <button className="button button-quiet" type="button" onClick={() => void undoRemoval()} disabled={undoingRemoval}>
-              <Undo2 size={14} /> {undoingRemoval ? t("正在恢复…", "Restoring…") : t("撤销", "Undo")}
-            </button>
-            <Link className="button button-quiet" href="/trash">{t("查看回收站", "Open trash")}</Link>
-          </div>
-        </div>
-      )}
+      <TaskRecommender
+        skills={inventory.skills}
+        workspace={workspace}
+        query={query}
+        onQueryChange={setQuery}
+        searchInputRef={searchRef}
+        onSelect={selectRecommendation}
+        onClear={clearWorkspace}
+      />
 
-      <TaskRecommender skills={inventory.skills} workspace={workspace} onSelect={selectRecommendation} onClear={clearWorkspace} />
+      <section className="catalog-workspace" data-view={view} aria-label={t("技能目录工作区", "Skill catalog workspace")}>
+        <CatalogFilterRail
+          status={status}
+          source={source}
+          collection={collection}
+          workspace={workspace}
+          updateCount={updateCount}
+          resultCount={filtered.length}
+          totalCount={inventory.skills.length}
+          hasFilters={hasFilters}
+          onStatusChange={setStatus}
+          onSourceChange={setSource}
+          onCollectionChange={setCollection}
+          onReset={resetFilters}
+        />
 
-      <section className="workbench-controls" aria-label={t("查找和筛选技能", "Find and filter Skills")}>
-        <label className="command-search">
-          <Search size={20} aria-hidden="true" />
-          <span className="sr-only">{t("搜索技能", "Search Skills")}</span>
-          <input
-            ref={searchRef}
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && query.trim() && filtered.length === 0) recordZeroResultSearch(query, "inventory");
-            }}
-            placeholder={t("搜索名称、功能或标签…", "Search by name, capability, or tag…")}
-          />
-          <kbd>Ctrl K</kbd>
-        </label>
+        <div className="catalog-results-column">
+          <header className="catalog-list-toolbar">
+            <div><strong>{t("本地 Skill", "Local Skills")}</strong><span>{t(`显示 ${filtered.length} / ${inventory.skills.length}`, `Showing ${filtered.length} / ${inventory.skills.length}`)}</span></div>
+            <div className="view-switcher" aria-label={t("切换列表样式", "Change list view")}>
+              <button type="button" data-active={view === "compact"} onClick={() => setView("compact")} aria-label={t("紧凑视图", "Compact view")}>
+                <List size={18} aria-hidden="true" /> <span>{t("紧凑", "Compact")}</span>
+              </button>
+              <button type="button" data-active={view === "cards"} onClick={() => setView("cards")} aria-label={t("卡片视图", "Card view")}>
+                <LayoutGrid size={17} aria-hidden="true" /> <span>{t("卡片", "Cards")}</span>
+              </button>
+            </div>
+          </header>
 
-        <div className="view-switcher" aria-label={t("切换列表样式", "Change list view")}>
-          <button type="button" data-active={view === "compact"} onClick={() => setView("compact")} aria-label={t("紧凑视图", "Compact view")}>
-            <List size={18} aria-hidden="true" /> <span>{t("紧凑", "Compact")}</span>
-          </button>
-          <button type="button" data-active={view === "cards"} onClick={() => setView("cards")} aria-label={t("卡片视图", "Card view")}>
-            <LayoutGrid size={17} aria-hidden="true" /> <span>{t("卡片", "Cards")}</span>
-          </button>
-        </div>
-
-        <div className="personal-filter-row" aria-label={t("个人整理筛选", "Personal organization filters")}>
-          <span>{t("我的整理", "My library")}</span>
-          <button type="button" data-active={collection === "all"} onClick={() => setCollection("all")}>{t("全部", "All")}</button>
-          <button type="button" data-active={collection === "pinned"} onClick={() => setCollection("pinned")}><Pin size={13} aria-hidden="true" /> {t("置顶", "Pinned")} <b>{workspace.pinned.length}</b></button>
-          <button type="button" data-active={collection === "favorites"} onClick={() => setCollection("favorites")}><Star size={13} aria-hidden="true" /> {t("收藏", "Favorites")} <b>{workspace.favorites.length}</b></button>
-          <button type="button" data-active={collection === "recent"} onClick={() => setCollection("recent")}><Clock3 size={13} aria-hidden="true" /> {t("最近复制", "Recently copied")} <b>{workspace.recentCopies.length}</b></button>
-          <small>{t("置顶技能会优先显示", "Pinned Skills are shown first")}</small>
-        </div>
-
-        <div className="filter-row">
-          <span className="filter-label"><SlidersHorizontal size={15} aria-hidden="true" /> {t("筛选", "Filters")}</span>
-          <label className="select-box">
-            <span className="sr-only">{t("状态", "Status")}</span>
-            <select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter) }>
-              <option value="all">{t("全部状态", "All statuses")}</option>
-              <option value="updates">{t(`有更新 (${updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length})`, `Updates available (${updateRecords.filter((record) => ["update-available", "local-changes"].includes(record.status)).length})`)}</option>
-              <option value="source:locked">{t("来源已锁定", "Source locked")}</option>
-              <option value="source:unlocked">{t("来源未锁定", "Source unlocked")}</option>
-              <option value="source:trusted">{t("来源在信任名单", "Trusted source")}</option>
-              <option value="source:unlisted">{t("来源未列入信任名单", "Unlisted source")}</option>
-              <option value="source:archived">{t("上游仓库已归档", "Archived upstream")}</option>
-              <option value="structure:valid">{structureStatusLabel("valid", language)}</option>
-              <option value="environment:ready">{environmentStatusLabel("ready", language)}</option>
-              <option value="environment:unverified">{environmentStatusLabel("unverified", language)}</option>
-              <option value="environment:needs-setup">{environmentStatusLabel("needs-setup", language)}</option>
-              <option value="usable">{statusLabel("usable", language)}</option>
-              <option value="explicit-only">{statusLabel("explicit-only", language)}</option>
-              <option value="conditional">{statusLabel("conditional", language)}</option>
-              <option value="missing-dependency">{statusLabel("missing-dependency", language)}</option>
-              <option value="invalid-metadata">{statusLabel("invalid-metadata", language)}</option>
-              <option value="duplicate">{statusLabel("duplicate", language)}</option>
-            </select>
-          </label>
-          <Link className="button button-quiet" href="/operations"><GitCompareArrows size={14} /> {t("批量检查", "Batch check")}</Link>
-          <label className="select-box">
-            <span className="sr-only">{t("来源", "Source")}</span>
-            <select value={source} onChange={(event) => setSource(event.target.value)}>
-              <option value="all">{t("全部来源", "All sources")}</option>
-              <option value="personal">{t("个人", "Personal")}</option>
-              <option value="system">{t("系统", "System")}</option>
-              <option value="plugin">{t("插件", "Plugin")}</option>
-              <option value="compatibility">{t("兼容目录", "Compatibility")}</option>
-            </select>
-          </label>
-          {hasFilters && (
-            <button type="button" className="reset-filters" onClick={resetFilters}>
-              <RotateCcw size={14} aria-hidden="true" /> {t("清除", "Clear")}
-            </button>
-          )}
-          <output className="result-count">{t("显示", "Showing")} {filtered.length} / {inventory.skills.length}</output>
-        </div>
-      </section>
-
-      {filtered.length ? (
-        <section className="inventory-workspace" data-view={view} aria-label={t("技能工作区", "Skill workspace")}>
-          <div className="inventory-results">
+          {filtered.length ? (
+            <div className="inventory-results">
             {view === "cards" ? (
               <div className="skill-grid" aria-label={t("技能卡片列表", "Skill card list")}>
                 {filtered.map((skill) => (
@@ -410,35 +243,39 @@ export function DashboardClient({
                 ))}
               </div>
             )}
-          </div>
-          {selectedSkill && (
-            <SkillInspector
+            </div>
+          ) : (
+            <section className="empty-state">
+              <span>0</span>
+              <h2>{t("当前筛选没有结果", "No results for these filters")}</h2>
+              <p>{t("换一个关键词，或清除状态和来源筛选。", "Try another keyword or clear the status and source filters.")}</p>
+              <button className="button button-quiet" type="button" onClick={resetFilters}>{t("清除筛选", "Clear filters")}</button>
+            </section>
+          )}
+
+          {selectedSkill && <CatalogPersonalNote key={selectedSkill.id} skill={selectedSkill} note={workspace.notes[selectedSkill.id] || ""} onSave={saveNote} />}
+        </div>
+
+        {selectedSkill && (
+          <ResponsiveBuilderShell
+            labelledBy={`invocation-builder-${selectedSkill.id}`}
+            open={builderOpen}
+            onOpen={() => setBuilderOpen(true)}
+            onClose={() => setBuilderOpen(false)}
+          >
+            <InvocationBuilder
               key={selectedSkill.id}
               skill={selectedSkill}
-              onPrompt={openPrompt}
+              initialTask={builderTask}
+              journeyStartedAt={selectedJourneyStartedAt}
               favorite={workspace.favorites.includes(selectedSkill.id)}
               pinned={workspace.pinned.includes(selectedSkill.id)}
-              note={workspace.notes[selectedSkill.id] || ""}
               onToggleFavorite={toggleFavorite}
               onTogglePinned={togglePinned}
-              onSaveNote={saveNote}
-              onRemove={setRemovalSkill}
-              onDisable={setDisableSkill}
             />
-          )}
-        </section>
-      ) : (
-        <section className="empty-state">
-          <span>0</span>
-          <h2>{t("当前筛选没有结果", "No results for these filters")}</h2>
-          <p>{t("换一个关键词，或清除状态和来源筛选。", "Try another keyword or clear the status and source filters.")}</p>
-          <button className="button button-quiet" type="button" onClick={resetFilters}>{t("清除筛选", "Clear filters")}</button>
-        </section>
-      )}
-
-      {promptSkill && <PromptDialog skill={promptSkill} journeyStartedAt={promptJourneyStartedAt} onClose={() => setPromptSkill(null)} />}
-      {removalSkill && <SkillRemovalDialog skillId={removalSkill.id} onClose={() => setRemovalSkill(null)} onRemoved={removed} />}
-      {disableSkill && <SkillDisableDialog skillId={disableSkill.id} onClose={() => setDisableSkill(null)} onDisabled={disabled} />}
+          </ResponsiveBuilderShell>
+        )}
+      </section>
       {inventory.warnings.length > 0 && (
         <details className="scan-warnings">
           <summary>{t(`${inventory.warnings.length} 条扫描提示`, `${inventory.warnings.length} scan notices`)}</summary>

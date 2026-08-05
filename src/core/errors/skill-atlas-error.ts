@@ -65,6 +65,12 @@ export type SkillAtlasErrorCode =
   | "SOURCE_POLICY_FAILED"
   | "DATA_EXPORT_FAILED"
   | "DATA_IMPORT_FAILED"
+  | "AI_SETTINGS_UNAVAILABLE"
+  | "AI_SETTINGS_INVALID"
+  | "AI_SETTINGS_ENCRYPTION_FAILED"
+  | "AI_SETTINGS_WRITE_FAILED"
+  | "AI_SETTINGS_SAVE_FAILED"
+  | "AI_SETTINGS_CLEAR_FAILED"
   | "RESCAN_FAILED"
   | "PROMPT_FAILED";
 
@@ -131,6 +137,12 @@ const messages: Record<SkillAtlasErrorCode, Record<Language, string>> = {
   SOURCE_POLICY_FAILED: { zh: "无法读取或保存来源策略。", en: "The source policy could not be read or saved." },
   DATA_EXPORT_FAILED: { zh: "无法导出本地数据。", en: "Local data could not be exported." },
   DATA_IMPORT_FAILED: { zh: "无法安全导入本地数据；现有数据未被直接覆盖。", en: "Local data could not be imported safely. Existing data was not directly overwritten." },
+  AI_SETTINGS_UNAVAILABLE: { zh: "无法读取本机 AI 配置。默认本地提示词仍然可用。", en: "Local AI settings could not be read. The deterministic local Prompt remains available." },
+  AI_SETTINGS_INVALID: { zh: "AI 配置内容无效。请检查提供商、模型名称和 Key 长度后重试。", en: "The AI settings are invalid. Check the provider, model name, and key length, then try again." },
+  AI_SETTINGS_ENCRYPTION_FAILED: { zh: "Windows 无法加密 API Key。请确认 Windows PowerShell 可用，并从当前用户会话启动 Skill Atlas。", en: "Windows could not encrypt the API key. Confirm Windows PowerShell is available and start Skill Atlas from the current user session." },
+  AI_SETTINGS_WRITE_FAILED: { zh: "API Key 已完成加密，但无法写入本机配置目录。请检查目录权限或文件占用。", en: "The API key was encrypted, but the local settings directory could not be written. Check permissions or file locks." },
+  AI_SETTINGS_SAVE_FAILED: { zh: "无法保存 AI 配置。默认本地提示词仍然可用。", en: "AI settings could not be saved. The deterministic local Prompt remains available." },
+  AI_SETTINGS_CLEAR_FAILED: { zh: "无法清除页面保存的 AI 配置。", en: "AI settings saved from the page could not be cleared." },
   RESCAN_FAILED: { zh: "重新扫描失败。", en: "The rescan failed." },
   PROMPT_FAILED: { zh: "调用提示词生成失败。", en: "The invocation Prompt could not be generated." },
 };

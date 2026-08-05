@@ -3,6 +3,7 @@ import { chmod, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promi
 import path from "node:path";
 import { z } from "zod";
 
+import { SkillAtlasError } from "@/core/errors/skill-atlas-error";
 import { isPathInside, resolveCodexEnvironment } from "@/core/skills/paths";
 import {
   resolveAiProviderConfig,
@@ -221,7 +222,7 @@ async function writeStoredDocument(document: StoredAiSettings, options: RuntimeA
     await chmod(location, 0o600).catch(() => undefined);
   } catch (error) {
     await unlink(temporary).catch(() => undefined);
-    throw error;
+    throw new SkillAtlasError("AI_SETTINGS_WRITE_FAILED", { cause: error });
   }
 }
 
@@ -257,7 +258,7 @@ export async function clearRuntimeAiSettings(
   let summary: AiSettingsSummary | undefined;
   settingsWriteQueue = settingsWriteQueue.catch(() => undefined).then(async () => {
     await unlink(settingsLocation(options)).catch((error) => {
-      if (!isMissingFile(error)) throw error;
+      if (!isMissingFile(error)) throw new SkillAtlasError("AI_SETTINGS_CLEAR_FAILED", { cause: error });
     });
     summary = (await loadRuntimeAiSettings(options)).summary;
   });

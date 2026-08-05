@@ -86,7 +86,7 @@ select option {
   background: #101827;
 }
 
-.task-finder textarea,
+.catalog-command-input-wrap input,
 .task-recommendations button,
 .insight-metrics > div {
   color: var(--ink);
@@ -94,7 +94,7 @@ select option {
   background: #0f1726;
 }
 
-.task-finder textarea:focus {
+.catalog-command-input-wrap input:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgb(139 162 255 / 15%);
 }

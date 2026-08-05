@@ -77,7 +77,7 @@ html[data-language="en"] .i18n-en {
     grid-column: 1;
   }
 
-  .app-sidebar .main-nav {
+  .sidebar-nav-groups {
     grid-column: 2;
   }
 
@@ -107,7 +107,7 @@ html[data-language="en"] .i18n-en {
     grid-column: 2;
   }
 
-  .app-sidebar .main-nav {
+  .sidebar-nav-groups {
     grid-row: 2;
     grid-column: 1 / -1;
   }

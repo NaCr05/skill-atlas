@@ -319,7 +319,7 @@ test("market discovery recommends only grounded uninstalled candidates and hands
   await marketZone.getByRole("button", { name: "审查并安装" }).click();
   const dialog = page.getByRole("dialog", { name: /market-ui-builder/ });
   await expect(dialog).toBeVisible();
-  await expect(page).toHaveURL(/\/skills$/);
+  await expect(page).toHaveURL(/\/$/);
   expect(inspectRequests).toBe(1);
   expect(installRequests).toBe(0);
   expect(aiRequests).toHaveLength(1);

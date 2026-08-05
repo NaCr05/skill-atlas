@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
 
+import { SkillAtlasError } from "@/core/errors/skill-atlas-error";
+
 const MAX_OUTPUT_BYTES = 32 * 1024;
 const TRANSFORM_TIMEOUT_MS = 8_000;
 
@@ -35,13 +37,21 @@ $bytes = [System.Security.Cryptography.ProtectedData]::Unprotect(
 
 function transformSecret(script: string, input: string): Promise<string> {
   if (process.platform !== "win32") {
-    throw new Error("Windows DPAPI is unavailable on this platform.");
+    throw new SkillAtlasError("AI_SETTINGS_ENCRYPTION_FAILED");
   }
 
   return new Promise((resolve, reject) => {
     const child = spawn(
       "powershell.exe",
-      ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script],
+      [
+        "-NoLogo",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-EncodedCommand",
+        Buffer.from(script, "utf16le").toString("base64"),
+      ],
       { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] },
     );
     const stdout: Buffer[] = [];
@@ -52,7 +62,7 @@ function transformSecret(script: string, input: string): Promise<string> {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
-      reject(new Error("Unable to protect the local AI credential."));
+      reject(new SkillAtlasError("AI_SETTINGS_ENCRYPTION_FAILED"));
     }
 
     const timeout = setTimeout(() => {
@@ -77,9 +87,14 @@ function transformSecret(script: string, input: string): Promise<string> {
         fail();
         return;
       }
+      const output = Buffer.concat(stdout).toString("utf8").trim();
+      if (!output) {
+        fail();
+        return;
+      }
       settled = true;
       clearTimeout(timeout);
-      resolve(Buffer.concat(stdout).toString("utf8"));
+      resolve(output);
     });
     child.stdin.on("error", fail);
     child.stdin.end(input, "utf8");

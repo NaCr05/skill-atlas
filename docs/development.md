@@ -13,8 +13,8 @@ The project requires Next.js 16 conventions. Route and page `params` are promise
 
 | Area | Responsibility |
 | --- | --- |
-| `src/app` | Pages and validated HTTP handlers |
-| `src/components` | Client interactions and reusable UI |
+| `src/app` | Pages and validated HTTP handlers; `/` is the catalog, `/graph` is the capability graph, and `/skills` redirects to `/` |
+| `src/components` | Client interactions and reusable UI, including the command surface, catalog filter rail, and responsive invocation Builder |
 | `src/core/skills` | Filesystem inventory and Prompt rules |
 | `src/core/marketplaces` | External discovery adapters |
 | `src/core/installer` | Review, confirmation, download, and verification |
@@ -57,3 +57,5 @@ npm run screenshots
 ```
 
 The capture uses a separate local port and deterministic test directories. Review every resulting file under `artifacts/` before committing it.
+
+The capture must enter the catalog through `/` and select a fixture Skill before recording the desktop Builder. Do not add assumptions about graph-only controls to the home-page capture; graph screenshots must navigate to `/graph` explicitly.
