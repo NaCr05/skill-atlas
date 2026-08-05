@@ -21,33 +21,19 @@ test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
 
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("explicit");
   await expect(page.getByRole("heading", { name: "Explicit Interview" })).toBeVisible();
-  const promptTrigger = page.locator(".skill-inspector .button-primary.button-wide");
-  await promptTrigger.click();
-  const accessiblePrompt = page.getByRole("dialog", { name: /Explicit Interview/ });
-  await expect(accessiblePrompt.locator("#task-context")).toBeFocused();
-  const promptClose = accessiblePrompt.locator(".dialog-heading .icon-button");
-  await promptClose.focus();
-  await page.keyboard.press("Shift+Tab");
-  await expect(accessiblePrompt.locator("button:not([disabled])").last()).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(accessiblePrompt).toBeHidden();
-  await expect(promptTrigger).toBeFocused();
+  const builder = page.locator(".invocation-builder");
   await expect(page.getByRole("heading", { name: "ready-skill" })).toBeHidden();
 
-  await page.getByRole("button", { name: "复制调用提示词" }).click();
-  await expect(page.getByRole("dialog", { name: /调用 Explicit Interview/ })).toBeVisible();
-  await page.getByLabel(/这次想让它做什么/).fill("请检验我的发布计划");
-  await expect(page.locator(".prompt-preview pre")).toContainText("$explicit-skill");
-  await expect(page.locator(".prompt-preview pre")).toContainText("请检验我的发布计划");
-  await page.getByLabel("使用 AI 个性化增强").check();
-  await page.getByRole("button", { name: "生成增强版" }).click();
+  await builder.getByLabel(/这次想让它做什么/).fill("请检验我的发布计划");
+  await expect(builder.locator(".invocation-prompt-preview pre")).toContainText("$explicit-skill");
+  await expect(builder.locator(".invocation-prompt-preview pre")).toContainText("请检验我的发布计划");
+  await builder.getByRole("button", { name: "使用 AI 增强" }).click();
   await expect(page.locator(".inline-notice")).toContainText("未配置 AI 提供商");
-  await expect(page.locator(".prompt-preview pre")).toContainText("请检验我的发布计划");
-  await page.getByRole("button", { name: "关闭" }).click();
+  await expect(builder.locator(".invocation-prompt-preview pre")).toContainText("请检验我的发布计划");
 
   await Promise.all([
     page.waitForURL(/\/skills\//),
-    page.getByRole("link", { name: "详情" }).click(),
+    builder.getByRole("link", { name: "完整详情" }).click(),
   ]);
   await expect(page.getByRole("heading", { name: "Explicit Interview" })).toBeVisible();
   await expect(page.getByText("不允许，必须点名")).toBeVisible();
@@ -195,25 +181,25 @@ test("personal Skills use a reviewed, recoverable removal flow", async ({ page }
 
   await page.goto("/skills");
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
-  await page.locator(".compact-skill-row").click();
-  const removalTrigger = page.locator(".skill-inspector .button-danger-quiet");
+  await Promise.all([
+    page.waitForURL(/\/skills\//),
+    page.locator(".invocation-builder").getByRole("link", { name: "完整详情" }).click(),
+  ]);
+  const lifecycle = page.locator(".lifecycle-actions-panel");
+  const removalTrigger = lifecycle.getByRole("button", { name: "移到回收站" });
   await removalTrigger.click();
   const accessibleRemoval = page.getByRole("dialog");
   await expect(accessibleRemoval).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(accessibleRemoval).toBeHidden();
   await expect(removalTrigger).toBeFocused();
-  await page.locator(".skill-inspector").getByRole("button", { name: "移到回收站" }).click();
+  await removalTrigger.click();
   const removal = page.getByRole("dialog", { name: /移到 Skill 回收站/ });
   await expect(removal.getByText("这项审查完全由本机确定性规则完成，不调用外部 AI，也不会执行 Skill 中的脚本。")).toBeVisible();
   await removal.getByLabel(/我确认把这个完整 Skill 目录/).check();
-  await removal.getByRole("button", { name: "确认移到回收站" }).click();
-  await expect(page.getByText(/已移到可恢复的 Skill 回收站/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "查看回收站" })).toBeVisible();
-
   await Promise.all([
     page.waitForURL(/\/trash$/),
-    page.locator(".removal-success").getByRole("link", { name: "查看回收站" }).click(),
+    removal.getByRole("button", { name: "确认移到回收站" }).click(),
   ]);
   const trash = page.locator(".trash-page");
   await expect(trash.getByRole("heading", { name: /Skill 回收站/ })).toBeVisible();
@@ -225,14 +211,16 @@ test("personal Skills use a reviewed, recoverable removal flow", async ({ page }
 
   await page.goto("/skills");
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
-  await page.locator(".compact-skill-row").click();
-  await page.locator(".skill-inspector").getByRole("button", { name: "移到回收站" }).click();
+  await Promise.all([
+    page.waitForURL(/\/skills\//),
+    page.locator(".invocation-builder").getByRole("link", { name: "完整详情" }).click(),
+  ]);
+  await page.locator(".lifecycle-actions-panel").getByRole("button", { name: "移到回收站" }).click();
   const secondRemoval = page.getByRole("dialog", { name: /移到 Skill 回收站/ });
   await secondRemoval.getByLabel(/我确认把这个完整 Skill 目录/).check();
-  await secondRemoval.getByRole("button", { name: "确认移到回收站" }).click();
   await Promise.all([
     page.waitForURL(/\/trash$/),
-    page.locator(".removal-success").getByRole("link", { name: "查看回收站" }).click(),
+    secondRemoval.getByRole("button", { name: "确认移到回收站" }).click(),
   ]);
   await page.getByRole("button", { name: "彻底删除…" }).click();
   const permanentDeletion = page.getByRole("dialog", { name: /彻底删除 · ready-skill/ });
@@ -284,8 +272,11 @@ test("personal Skills can be disabled and re-enabled in place", async ({ page })
 
   await page.goto("/skills");
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
-  await page.locator(".compact-skill-row").click();
-  const trigger = page.locator(".skill-inspector").getByRole("button", { name: "停用 Skill" });
+  await Promise.all([
+    page.waitForURL(/\/skills\//),
+    page.locator(".invocation-builder").getByRole("link", { name: "完整详情" }).click(),
+  ]);
+  const trigger = page.locator(".lifecycle-actions-panel").getByRole("button", { name: "停用 Skill" });
   await trigger.click();
   const dialog = page.getByRole("dialog", { name: /停用 Skill/ });
   await expect(dialog.getByText("停用只移动完整目录，不执行 Skill 脚本，也不调用外部 AI。")).toBeVisible();
@@ -314,20 +305,19 @@ test("task recommendation and personal workspace remain local", async ({ page, c
   await expect(recommendation).toBeVisible();
   await recommendation.click();
 
-  const inspector = page.locator(".skill-inspector");
-  await expect(inspector.getByRole("heading", { name: "ready-skill" })).toBeVisible();
-  await inspector.getByRole("button", { name: "收藏" }).click();
-  await inspector.getByRole("button", { name: "置顶" }).click();
-  await inspector.getByLabel("个人备注").fill("发布前检查变更范围和版本号");
-  await inspector.getByRole("button", { name: "保存备注" }).click();
+  const builder = page.locator(".invocation-builder");
+  await expect(builder.getByRole("heading", { name: "ready-skill" })).toBeVisible();
+  await builder.getByRole("button", { name: "收藏" }).click();
+  await builder.getByRole("button", { name: "置顶" }).click();
+  const note = page.locator(".catalog-personal-note");
+  await note.getByText(/个人备注/).click();
+  await note.getByLabel("个人备注").fill("发布前检查变更范围和版本号");
+  await note.getByRole("button", { name: "保存备注" }).click();
 
-  await inspector.getByRole("button", { name: "复制调用提示词" }).click();
-  const dialog = page.getByRole("dialog", { name: /调用 ready-skill/ });
-  await expect(dialog.locator(".prompt-preview pre")).toContainText("任务目标：");
-  await expect(dialog.locator(".prompt-preview pre")).toContainText("执行要求：");
-  await dialog.getByRole("button", { name: "复制调用提示词" }).click();
-  await expect(dialog.getByRole("button", { name: /已复制/ })).toBeVisible();
-  await dialog.getByRole("button", { name: "关闭" }).click();
+  await expect(builder.locator(".invocation-prompt-preview pre")).toContainText("任务目标：");
+  await expect(builder.locator(".invocation-prompt-preview pre")).toContainText("执行要求：");
+  await builder.getByRole("button", { name: "复制调用 Prompt" }).click();
+  await expect(builder.getByRole("button", { name: /已复制/ })).toBeVisible();
 
   await expect(page.locator(".personal-filter-row").getByRole("button", { name: /置顶 1/ })).toBeVisible();
   await expect(page.locator(".personal-filter-row").getByRole("button", { name: /收藏 1/ })).toBeVisible();
@@ -340,7 +330,8 @@ test("task recommendation and personal workspace remain local", async ({ page, c
 
   await page.reload();
   await page.locator(".personal-filter-row").getByRole("button", { name: /收藏 1/ }).click();
-  await expect(page.locator(".skill-inspector").getByLabel("个人备注")).toHaveValue("发布前检查变更范围和版本号");
+  await page.locator(".catalog-personal-note").getByText(/个人备注/).click();
+  await expect(page.locator(".catalog-personal-note").getByLabel("个人备注")).toHaveValue("发布前检查变更范围和版本号");
   await expect(page.locator(".personal-filter-row").getByRole("button", { name: /最近复制 1/ })).toBeVisible();
 });
 
@@ -497,7 +488,7 @@ test("market result starts the same review-and-install checkpoint directly", asy
 test("installed Skill focus link filters and selects the requested Skill", async ({ page }) => {
   await page.goto("/skills?skill=ready-skill#inventory");
   await expect(page.getByRole("combobox", { name: /搜索技能/ })).toHaveValue("ready-skill");
-  await expect(page.locator(".skill-inspector").getByRole("heading", { name: "ready-skill" })).toBeVisible();
+  await expect(page.locator(".invocation-builder").getByRole("heading", { name: "ready-skill" })).toBeVisible();
 });
 
 test("settings explains environment readiness and repair paths", async ({ page }) => {

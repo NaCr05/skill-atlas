@@ -1,21 +1,17 @@
 "use client";
 
-import { Clock3, GitCompareArrows, LayoutGrid, List, Pin, RefreshCw, RotateCcw, SlidersHorizontal, Star, Trash2, Undo2 } from "lucide-react";
+import { Clock3, GitCompareArrows, LayoutGrid, List, Pin, RefreshCw, RotateCcw, SlidersHorizontal, Star } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { localeFor, localizeGeneratedText, sourceLabel } from "@/core/i18n";
-import type { SkillRemovalResult, SkillRestoreResult } from "@/core/lifecycle/types";
 import type { BatchUpdateOverview, BatchUpdateRecord } from "@/core/lifecycle/update-batch";
 import { catalogHealthBucket, catalogQuerySkillIds } from "@/core/skills/catalog";
 import type { SkillInventorySummary, SkillSummary } from "@/core/skills/types";
+import { CatalogPersonalNote } from "./catalog-personal-note";
+import { InvocationBuilder } from "./invocation-builder";
 import { useLanguage } from "./language-provider";
-import { PromptDialog } from "./prompt-dialog";
 import { SkillCard } from "./skill-card";
-import { SkillInspector } from "./skill-inspector";
-import { SkillDisableDialog } from "./skill-disable-dialog";
-import { SkillRemovalDialog } from "./skill-removal-dialog";
 import { StatusBadge } from "./status-badge";
 import { TaskRecommender } from "./task-recommender";
 import { useLocalWorkspace } from "./use-local-workspace";
@@ -32,7 +28,6 @@ export function DashboardClient({
   initialFocusedSkillName?: string;
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const initialFocusedSkill = initialInventory.skills.find((skill) => skill.name === initialFocusedSkillName);
   const [inventory, setInventory] = useState(initialInventory);
   const [query, setQuery] = useState(initialFocusedSkill?.name || "");
@@ -43,17 +38,11 @@ export function DashboardClient({
   const [selectedId, setSelectedId] = useState(
     initialFocusedSkill?.id ?? initialInventory.skills.find((skill) => skill.environmentStatus === "ready")?.id ?? initialInventory.skills[0]?.id ?? "",
   );
-  const [promptSkill, setPromptSkill] = useState<SkillSummary | null>(null);
-  const [promptJourneyStartedAt, setPromptJourneyStartedAt] = useState<number>();
   const [rescanning, setRescanning] = useState(false);
   const [rescanError, setRescanError] = useState("");
-  const [removalSkill, setRemovalSkill] = useState<SkillSummary | null>(null);
-  const [disableSkill, setDisableSkill] = useState<SkillSummary | null>(null);
   const [updateRecords, setUpdateRecords] = useState<BatchUpdateRecord[]>([]);
-  const [lastRemoval, setLastRemoval] = useState<SkillRemovalResult | null>(null);
-  const [undoingRemoval, setUndoingRemoval] = useState(false);
+  const [selectedJourneyStartedAt, setSelectedJourneyStartedAt] = useState(() => Date.now());
   const searchRef = useRef<HTMLInputElement>(null);
-  const journeyStarts = useRef(new Map<string, number>());
   const { workspace, toggleFavorite, togglePinned, saveNote, clearWorkspace } = useLocalWorkspace();
 
   useEffect(() => {
@@ -109,7 +98,7 @@ export function DashboardClient({
 
   function selectSkill(skill: SkillSummary) {
     setSelectedId(skill.id);
-    journeyStarts.current.set(skill.id, Date.now());
+    setSelectedJourneyStartedAt(Date.now());
   }
 
   function selectRecommendation(skill: SkillSummary) {
@@ -118,13 +107,6 @@ export function DashboardClient({
     setCollection("all");
     selectSkill(skill);
     window.setTimeout(() => document.querySelector(".inventory-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-  }
-
-  function openPrompt(skill: SkillSummary) {
-    const startedAt = journeyStarts.current.get(skill.id) ?? Date.now();
-    journeyStarts.current.set(skill.id, startedAt);
-    setPromptJourneyStartedAt(startedAt);
-    setPromptSkill(skill);
   }
 
   function resetFilters() {
@@ -151,43 +133,6 @@ export function DashboardClient({
     }
   }
 
-  async function removed(result: SkillRemovalResult) {
-    setRemovalSkill(null);
-    setLastRemoval(result);
-    await rescan();
-  }
-
-  async function disabled() {
-    setDisableSkill(null);
-    await rescan();
-    router.push("/trash");
-  }
-
-  async function restored() {
-    setLastRemoval(null);
-    await rescan();
-  }
-
-  async function undoRemoval() {
-    if (!lastRemoval) return;
-    setUndoingRemoval(true);
-    setRescanError("");
-    try {
-      const response = await fetch("/api/lifecycle/restore", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "X-Skill-Atlas-Language": language },
-        body: JSON.stringify({ trashId: lastRemoval.trashId }),
-      });
-      const payload = (await response.json()) as SkillRestoreResult & { error?: string };
-      if (!response.ok) throw new Error(payload.error || t("恢复失败", "Restore failed"));
-      await restored();
-    } catch (error) {
-      setRescanError(error instanceof Error ? error.message : t("恢复失败", "Restore failed"));
-    } finally {
-      setUndoingRemoval(false);
-    }
-  }
-
   const environmentReady = inventory.skills.filter((skill) => catalogHealthBucket(skill) === "ready").length;
   const attention = inventory.skills.length - environmentReady;
   const scannedAt = new Date(inventory.scannedAt).toLocaleTimeString(localeFor(language), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -209,18 +154,6 @@ export function DashboardClient({
         </div>
       </div>
       {rescanError && <p className="inline-error standalone">{rescanError}</p>}
-      {lastRemoval && (
-        <div className="removal-success" role="status">
-          <div><Trash2 size={17} /><span><strong>{lastRemoval.skillName}</strong> {t("已移到可恢复的 Skill 回收站。", "was moved to the recoverable Skill trash.")}</span></div>
-          <div>
-            <button className="button button-quiet" type="button" onClick={() => void undoRemoval()} disabled={undoingRemoval}>
-              <Undo2 size={14} /> {undoingRemoval ? t("正在恢复…", "Restoring…") : t("撤销", "Undo")}
-            </button>
-            <Link className="button button-quiet" href="/trash">{t("查看回收站", "Open trash")}</Link>
-          </div>
-        </div>
-      )}
-
       <TaskRecommender
         skills={inventory.skills}
         workspace={workspace}
@@ -334,18 +267,15 @@ export function DashboardClient({
             )}
           </div>
           {selectedSkill && (
-            <SkillInspector
+            <InvocationBuilder
               key={selectedSkill.id}
               skill={selectedSkill}
-              onPrompt={openPrompt}
+              initialTask={query.trim() && ![selectedSkill.name, selectedSkill.displayName, `$${selectedSkill.name}`].some((name) => name.toLocaleLowerCase() === query.trim().toLocaleLowerCase()) ? query.trim() : ""}
+              journeyStartedAt={selectedJourneyStartedAt}
               favorite={workspace.favorites.includes(selectedSkill.id)}
               pinned={workspace.pinned.includes(selectedSkill.id)}
-              note={workspace.notes[selectedSkill.id] || ""}
               onToggleFavorite={toggleFavorite}
               onTogglePinned={togglePinned}
-              onSaveNote={saveNote}
-              onRemove={setRemovalSkill}
-              onDisable={setDisableSkill}
             />
           )}
         </section>
@@ -358,9 +288,7 @@ export function DashboardClient({
         </section>
       )}
 
-      {promptSkill && <PromptDialog skill={promptSkill} journeyStartedAt={promptJourneyStartedAt} onClose={() => setPromptSkill(null)} />}
-      {removalSkill && <SkillRemovalDialog skillId={removalSkill.id} onClose={() => setRemovalSkill(null)} onRemoved={removed} />}
-      {disableSkill && <SkillDisableDialog skillId={disableSkill.id} onClose={() => setDisableSkill(null)} onDisabled={disabled} />}
+      {selectedSkill && <CatalogPersonalNote key={selectedSkill.id} skill={selectedSkill} note={workspace.notes[selectedSkill.id] || ""} onSave={saveNote} />}
       {inventory.warnings.length > 0 && (
         <details className="scan-warnings">
           <summary>{t(`${inventory.warnings.length} 条扫描提示`, `${inventory.warnings.length} scan notices`)}</summary>
