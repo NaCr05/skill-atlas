@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { SkillAtlasError } from "@/core/errors/skill-atlas-error";
 
 const MAX_OUTPUT_BYTES = 32 * 1024;
-const TRANSFORM_TIMEOUT_MS = 8_000;
+const TRANSFORM_TIMEOUT_MS = 20_000;
 
 const PROTECT_SCRIPT = String.raw`
 $ErrorActionPreference = 'Stop'

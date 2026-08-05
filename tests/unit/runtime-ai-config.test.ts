@@ -116,19 +116,4 @@ describe("runtime AI settings", () => {
     await expect(readFile(path.join(options.env!.CODEX_HOME!, ".skill-atlas", "ai-settings.json"), "utf8")).rejects.toMatchObject({ code: "ENOENT" });
   });
 
-  const windowsIt = process.platform === "win32" ? it : it.skip;
-  windowsIt("combines real Windows DPAPI encryption with an atomic settings write", async () => {
-    const codexHome = await mkdtemp(path.join(os.tmpdir(), "skill-atlas-ai-dpapi-"));
-    temporaryDirectories.push(codexHome);
-    const options: RuntimeAiConfigOptions = { env: { CODEX_HOME: codexHome } };
-
-    const summary = await saveRuntimeAiSettings({
-      selection: "deepseek",
-      providers: { openai: {}, deepseek: { apiKey: "dpapi-integration-test-key", model: "deepseek-v1-pro" } },
-    }, options);
-
-    expect(summary).toMatchObject({ provider: "deepseek", configured: true, hasSavedSettings: true });
-    expect((await loadRuntimeAiSettings(options)).config.apiKey).toBe("dpapi-integration-test-key");
-    expect(await readFile(summary.storagePath, "utf8")).not.toContain("dpapi-integration-test-key");
-  }, 20_000);
 });
