@@ -99,7 +99,7 @@ Stale plugin-cache releases are hidden. Compatibility and shared directories rem
 
 ## Optional integrations
 
-The local inventory, task recommendation, and default Prompt flow require no API key. AI enhancement can be configured directly in **Environment → AI connection console**: select a provider, enter its model and API key, and save. It takes effect immediately and survives refreshes and restarts. Keys are encrypted for the current Windows user with DPAPI and are never returned to the page after saving.
+The local inventory, task recommendation, and default Prompt flow require no API key. AI enhancement can be configured directly in **Environment → AI connection console**: select a provider, enter its model and API key, and save. It takes effect immediately and survives refreshes and restarts. Keys are encrypted for the current Windows user with DPAPI and are never returned to the page after saving. If saving fails, the interface distinguishes invalid input, Windows encryption failure, directory permissions, and file-lock conflicts without writing the key to logs or error messages.
 
 External models are strictly on demand. Loading a page, typing, searching, scanning, and using local recommendation do not call a provider. Marketplace search and AI ranking are also separate actions: search first returns grounded uninstalled candidates, then an optional AI button ranks only those exact results. Other separate buttons enable AI task matching, multi-Skill composition, installation-review explanation, update-difference summaries, and personal usage advice. See [On-demand AI assistance](docs/ai-assistance.md) for the exact data and failure boundaries.
 
