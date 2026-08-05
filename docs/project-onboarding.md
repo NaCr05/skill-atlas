@@ -30,10 +30,10 @@ Skill Atlas 读取本机 Codex 的 Skill 目录，将分散的 `SKILL.md` 和配
 
 ### 核心流程一：找到并调用已安装 Skill
 
-1. 启动 Skill Atlas，进入**本地技能**并重新扫描。
-2. 搜索名称/功能，或在“按任务找 Skill”中描述目标。
-3. 查看结构、调用策略、环境、依赖、来源和关联 Skill。
-4. 点击**复制调用 Prompt**。
+1. 启动 Skill Atlas；首页会直接进入**技能目录**，需要时点击重新扫描。
+2. 在同一个“查找 Skill”入口中输入精确名称、功能或任务描述；本地推荐立即生成，AI 和市场只有点击后才会访问外部服务。
+3. 在左侧按健康状态、来源或个人整理筛选，在中间选择结果，并在右侧调用 Builder 查看结构、调用策略、环境、依赖和来源。
+4. 只有状态为“已就绪”时才点击**复制调用 Prompt**；需要审查或配置的条目会显示阻断原因。
 5. 切换到 Codex，把 Prompt 粘贴到任务中并补充项目路径或材料。
 
 ### 核心流程二：发现并安装 Skill
@@ -250,7 +250,8 @@ npx playwright install chromium
 | 新增 AI 功能 | `src/core/ai` 契约 → 独立按钮 → 模拟测试 | 页面加载、输入、扫描和本地搜索不得自动调用；AI 不能授权写入。 |
 | 新增市场提供商 | 实现 `src/core/marketplaces` 的统一适配契约 | 提供商失败可降级；候选仍需安装审查。 |
 | 修改对话框 | 复用 `accessible-dialog` | 初始焦点、Tab 圈定、Esc、关闭后恢复焦点和写入锁。 |
-| 修改样式 | 在 `src/styles` 的正确层或组件模块中调整 | 保持 token/基础/组件/页面/主题顺序；检查中英文、桌面和移动端。 |
+| 修改目录界面 | `src/app/page.tsx` → `dashboard-client` → `task-recommender` / `catalog-filter-rail` / `invocation-builder` | 保持默认路由、单一命令入口、显式 AI/市场调用和 Builder 阻断规则。 |
+| 修改样式 | 在 `src/styles` 的正确层或组件模块中调整 | 保持 token/基础/组件/页面/主题顺序；页面局部规则不得覆盖全局导航；检查中英文、桌面、中屏和移动端。 |
 | 更新公开截图 | 先构建，再运行专用截图流程并人工检查全部 `artifacts` | 只使用测试夹具；不读取真实个人 Skill。 |
 | 修改 Windows 分发 | `scripts/startup`、`scripts/windows`、`packaging/windows` | 在干净 Windows runner 生成并安装 `.exe`，检查升级和卸载。 |
 
@@ -303,7 +304,7 @@ CMD 不认识 `Set-Location`，PowerShell 可能因脚本策略阻止 `.ps1` 或
 1. 完整阅读 [`AGENTS.md`](../AGENTS.md)、[Architecture](architecture.md) 和 [Security model](security-model.md)。
 2. 按上面的首次安装和推荐启动步骤打开网站。
 3. 运行 `npm run verify` 与 `npm run test:e2e`，确认本机基线。
-4. 从 `src/core/skills`、`src/app/skills/page.tsx` 和 `tests/e2e/dashboard.spec.ts` 跟一遍“扫描 → 详情 → 复制 Prompt”链路。
+4. 从 `src/core/skills`、`src/app/page.tsx`、`src/components/dashboard-client.tsx` 和 `tests/e2e/dashboard.spec.ts` 跟一遍“扫描 → 目录选择 → 调用 Builder → 复制 Prompt”链路。
 5. 再从安装或回收流程选择一条，观察“检查 → 计划 → 确认 → 事务 → 操作记录 → 恢复”的共同模式。
 6. 只在理解写入权限、指纹和回滚边界后修改生命周期代码。
 

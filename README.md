@@ -38,6 +38,14 @@ As your Skill collection grows, remembering every Skill's purpose, trigger rules
 | Move to another computer | Export and review-import preferences, notes, history, operations, source registry, and non-secret settings. API keys are excluded. |
 | Ask for deeper guidance | Explicitly call AI for installed-Skill matching, market-candidate ranking, Skill composition, review explanation, update summaries, or personal usage suggestions. |
 
+## Catalog-first workflow
+
+The home page is now the Skill catalog rather than a statistics dashboard. A single **Find a Skill** command accepts an exact name or a task description. Local matching is immediate; AI deep matching and marketplace discovery each require a separate explicit click before any external request is made.
+
+On desktop, the workspace is organized as **filters → results → invocation Builder**. Selecting a Skill shows provenance, permission, invocation policy, environment readiness, blockers, and a live Prompt in one place; copying stays disabled unless the Skill is ready. Medium screens move the Builder into a right drawer, while phones use a bottom sheet with trapped keyboard focus, Escape dismissal, and focus restoration. Favorites, pins, and recent copies organize the catalog; personal notes sit below the list; updates, disablement, and removal remain on the full detail and management surfaces.
+
+Health filters use three action-oriented buckets: **Ready** can generate and copy a Prompt, **Needs review** has an entry or metadata issue, and **Needs setup** is missing a structured dependency or environment condition. The knowledge graph remains available from navigation but no longer occupies the default route.
+
 ## Quick start
 
 ### Windows installer (no command line)

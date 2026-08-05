@@ -6,6 +6,9 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 
 ### Added
 
+- A catalog-first home page with one bilingual command for exact lookup and task matching, action-oriented health buckets, a desktop filter/results/Builder workspace, a medium-screen drawer, and a mobile bottom sheet.
+- Keyboard navigation for catalog recommendations, responsive filter dismissal, and invocation dialogs with focus trapping and restoration.
+
 - Phase-by-phase operation details for preflight, download, backup, replacement, verification, rollback, and completion, streamed into an accessible details drawer.
 - A Backups & Archives workspace with storage totals, update-backup and disabled-Skill inventory, recovery handoffs, and fingerprint-verified reviewed cleanup.
 - Configurable source governance for trusted authors/repositories, advisory or strict trust rules, SPDX license allowlists, archived-repository warnings, and source-lock filters.
@@ -47,6 +50,9 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 - A shared path renderer used across details, settings, installation, updates, operations, storage, and trash so Windows and repository paths wrap only at directory separators.
 
 ### Fixed
+
+- Public screenshot capture now targets the catalog home page and selects a deterministic fixture Skill instead of waiting for a graph-only layout control.
+- Trash-page responsive styles no longer hide labels or change navigation columns across unrelated mobile pages.
 
 - Hard Skill dependencies now come only from structured `dependencies.skills` declarations; prose references remain non-blocking relationships.
 - Fenced shell and PowerShell variables such as `$dest` are no longer misclassified as missing Skills.

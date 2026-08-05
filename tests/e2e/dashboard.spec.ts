@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await page.goto("/skills");
+  await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: /技能目录/ })).toBeVisible();
   const viewSwitcher = page.locator(".view-switcher");
   await expect(viewSwitcher.getByRole("button").nth(0)).toHaveAccessibleName("紧凑视图");
@@ -55,6 +56,53 @@ test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
     finalSegmentWhiteSpace: "nowrap",
     finalSegment: "explicit-skill",
   });
+});
+
+test("catalog command supports keyboard selection", async ({ page }) => {
+  await page.goto("/");
+  const command = page.getByRole("combobox", { name: /任务描述/ });
+  await command.fill("ready-skill");
+  await command.press("ArrowDown");
+  await expect(command).toHaveAttribute("aria-activedescendant", /catalog-option-/);
+  await command.press("Enter");
+  await expect(page.locator(".invocation-builder").getByRole("heading", { name: "ready-skill" })).toBeVisible();
+});
+
+test("responsive catalog filters and invocation Builder restore keyboard focus", async ({ page }) => {
+  await page.setViewportSize({ width: 900, height: 800 });
+  await page.goto("/");
+
+  const filterToggle = page.getByRole("button", { name: /筛选目录/ });
+  await filterToggle.click();
+  await expect(filterToggle).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(filterToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(filterToggle).toBeFocused();
+
+  const builderTrigger = page.getByRole("button", { name: "打开调用 Builder" });
+  await builderTrigger.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel("这次想让它做什么？")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(builderTrigger).toBeFocused();
+});
+
+test("mobile invocation Builder becomes a bottom sheet and preserves copy blockers", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.locator(".compact-skill-row").filter({ hasText: "needs-peer" }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  const geometry = await dialog.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { bottomGap: Math.round(window.innerHeight - rect.bottom), width: Math.round(rect.width), viewportWidth: window.innerWidth };
+  });
+  expect(geometry.bottomGap).toBe(0);
+  expect(geometry.width).toBe(geometry.viewportWidth);
+  await expect(dialog.getByRole("button", { name: "解决问题后才可复制" })).toBeDisabled();
 });
 
 test("personal Skills use a reviewed, recoverable removal flow", async ({ page }) => {
@@ -534,11 +582,15 @@ test("AI provider settings can be saved in the page and survive a refresh", asyn
 test("mobile layout has no horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/skills");
+  await expect(page.getByRole("link", { name: "技能目录" }).locator("span")).toBeVisible();
+  await expect(page.getByRole("link", { name: "环境设置" }).locator("span")).toBeVisible();
   const chineseOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(chineseOverflow).toBeLessThanOrEqual(1);
 
   await page.getByRole("button", { name: "切换到英文" }).click();
   await expect(page.getByRole("heading", { name: "Skill Catalog" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Skill catalog" }).locator("span")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Environment" }).locator("span")).toBeVisible();
   const englishOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(englishOverflow).toBeLessThanOrEqual(1);
 
