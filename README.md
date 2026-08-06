@@ -36,7 +36,8 @@ As your Skill collection grows, remembering every Skill's purpose, trigger rules
 | Govern sources | Maintain trusted authors/repositories and license policy; filter by source lock, trust, and archived status. |
 | Manage private storage | Inspect update backups, disabled Skills, and duplicate archives by path and size, then restore or review a safe cleanup. |
 | Manage the full lifecycle | Disable and re-enable personal Skills, move them to a recoverable trash, restore them in place, or permanently delete one item after a fresh exact-name review. |
-| Move to another computer | Export and review-import preferences, notes, history, operations, source registry, and non-secret settings. API keys are excluded. |
+| Reuse effective invocations | Save a “Skill + task + custom requirements” Prompt recipe, or an ordered 2–8 Skill workflow that generates a combined Prompt. |
+| Move to another computer | Export and review-import preferences, notes, recipes, workflows, feedback summaries, history, operations, source registry, and non-secret settings. API keys are excluded. |
 | Ask for deeper guidance | Explicitly call AI for installed-Skill matching, market-candidate ranking, Skill composition, review explanation, update summaries, or personal usage suggestions. |
 
 ## Catalog-first workflow
@@ -46,6 +47,8 @@ The home page is now the Skill catalog rather than a statistics dashboard. A sin
 On desktop, the workspace is organized as **filters → results → invocation Builder**. No Skill is selected by default: the Builder appears only after an explicit choice, keeps its content independently scrollable, and keeps **Copy invocation Prompt** visible at the bottom. The catalog renders at most 20 matching Skills per page so 500- and 1,000-Skill inventories remain bounded. Tablets use a compact navigation menu and move the Builder into a right drawer; phones collapse secondary usage insights and use a bottom sheet with trapped keyboard focus, Escape dismissal, and focus restoration. Favorites, pins, and recent copies organize the catalog; personal notes sit below the list; updates, disablement, and removal remain on the full detail and management surfaces.
 
 Health filters use three action-oriented buckets: **Ready** can generate and copy a Prompt, **Needs review** has an entry or metadata issue, and **Needs setup** is missing a structured dependency or environment condition. The knowledge graph remains available from navigation but no longer occupies the default route.
+
+The Builder's compact **Capability imprint** summarizes source and author, structure, environment, invocation mode, dependencies, recent use, and the active recommendation reason. After adding a task and custom requirements, you can save the result as a local Prompt recipe. Copying a Prompt unlocks **Helpful / Not solved / Wrong Skill** feedback; deterministic ranking uses only these local aggregates and never stores or uploads conversation text. The **Recipes & flows** workspace reuses recipes directly and lets you save, reorder, and copy multi-Skill workflows. This first workflow stage only generates a combined Prompt and never executes Codex automatically.
 
 ## Quick start
 
@@ -83,7 +86,8 @@ Then:
 1. Select **Rescan** to read the current local inventory.
 2. Describe a task or search for a Skill.
 3. Open a result, review its rules, and select **Copy invocation Prompt**.
-4. Paste the Prompt into Codex and add the details of your task.
+4. Save frequent invocations as Prompt recipes, or preserve an ordered set of Skills as a workflow.
+5. Paste the Prompt into Codex and add the details of your task.
 
 For terminal identification, missing-Node repair, PowerShell execution policy, manual startup, diagnostics, and production mode, see the [complete quick-start guide](docs/quick-start.md).
 
@@ -128,7 +132,8 @@ Settings saved in the page take precedence over environment variables; **Restore
 - Personal manageable Skills can be disabled into a private area outside Codex discovery and re-enabled at the original location after fingerprint and collision checks.
 - The dedicated Trash page shows the original and current storage paths, supports one-click restore, and allows per-Skill permanent deletion only after a fresh deterministic review and exact-name confirmation.
 - System, plugin, compatibility, and shared Skills remain read-only. Automatic, bulk, and scheduled trash cleanup are not available.
-- Favorites, notes, recent copies, task/search history snapshots, and lightweight usage metrics stay in browser-local storage.
+- Favorites, notes, Prompt recipes, workflows, recent copies, task/search history snapshots, and lightweight usage metrics stay in browser-local storage.
+- Post-copy effectiveness feedback stores only the Skill identifier, outcome counts, and timestamps; it never stores conversation text or sends feedback automatically to an AI provider.
 - Reopening a task or marketplace result from history never repeats an AI or marketplace request automatically.
 - The personal AI assistant sends Skill IDs and bounded usage aggregates only after a click; personal note bodies are never sent.
 - Market candidates are labeled **Not installed**, cannot be invoked or composed, and open the same deterministic review checkpoint as marketplace results. Installation still requires a separate human confirmation.

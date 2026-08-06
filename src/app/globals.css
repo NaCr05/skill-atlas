@@ -8,6 +8,7 @@
 @import "../styles/pages/workbench-shell.css";
 @import "../styles/features/task-discovery.css";
 @import "../styles/features/catalog-workbench.css";
+@import "../styles/features/personal-library.css";
 @import "../styles/pages/workbench.css";
 @import "../styles/components/discovery-history.css";
 @import "../styles/themes/dark-console.css";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, Boxes, CheckCircle2, LayoutGrid, ListChecks, Menu, Network, Settings, Store, Trash2, X } from "lucide-react";
+import { Archive, Boxes, CheckCircle2, LayoutGrid, Library, ListChecks, Menu, Network, Settings, Store, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ const navigationGroups = [
     en: "Workspace",
     items: [
       { href: "/", zh: "技能目录", en: "Skill catalog", icon: LayoutGrid },
+      { href: "/library", zh: "配方与工作流", en: "Recipes & flows", icon: Library },
       { href: "/graph", zh: "知识图谱", en: "Knowledge graph", icon: Network },
       { href: "/marketplace", zh: "技能市场", en: "Skill marketplace", icon: Store },
     ],

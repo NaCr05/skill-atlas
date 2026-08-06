@@ -4,6 +4,14 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 
 ## [Unreleased]
 
+### Added
+
+- A browser-local Prompt recipe library for saving and directly reusing a Skill, task, custom requirements, and language without re-entering them.
+- Saved ordered multi-Skill workflows with deterministic combined-Prompt generation, manual reordering, missing-Skill detection, and an explicit no-auto-execution boundary.
+- Copy-outcome feedback for **Helpful**, **Not solved**, and **Wrong Skill**, stored as bounded local aggregates and used to refine deterministic recommendations without storing or uploading conversation text.
+- A compact capability imprint in the invocation Builder showing source and author, structural validity, environment readiness, invocation mode, dependencies, recent use, and the active recommendation reason.
+- A dedicated bilingual **Recipes & flows** workspace, with recipe/workflow editing, reuse counts, backup/export coverage, and responsive layouts.
+
 ## [0.2.0] - 2026-08-06
 
 ### Added

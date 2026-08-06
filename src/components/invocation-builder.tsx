@@ -4,15 +4,19 @@ import { ArrowUpRight, Check, CircleAlert, Copy, Pin, Sparkles, Star } from "luc
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { environmentStatusLabel, permissionLabel, sourceKindLabel, statusLabel } from "@/core/i18n";
-import { recordPromptCopy } from "@/core/local-workspace";
+import { statusLabel } from "@/core/i18n";
+import { recordPromptCopy, type LocalWorkspaceState } from "@/core/local-workspace";
+import { taskWithRequirements, type PromptFeedbackOutcome, type PromptRecipe, type PromptRecipeInput } from "@/core/personal-library";
 import { translatedSkillDescription } from "@/core/skill-translations";
 import { catalogHealthBucket } from "@/core/skills/catalog";
 import { createInvocationPrompt, type PromptResult } from "@/core/skills/prompt";
 import type { SkillSummary } from "@/core/skills/types";
 
 import { useLanguage } from "./language-provider";
+import { CapabilityImprint } from "./capability-imprint";
+import { PromptFeedback } from "./prompt-feedback";
 import { ProvenanceLabel } from "./provenance-label";
+import { RecipeSavePanel } from "./recipe-save-panel";
 import { StatusBadge } from "./status-badge";
 
 export function InvocationBuilder({
@@ -23,6 +27,10 @@ export function InvocationBuilder({
   pinned,
   onToggleFavorite,
   onTogglePinned,
+  workspace,
+  onSaveRecipe,
+  onFeedback,
+  initialRecipe,
 }: {
   skill: SkillSummary;
   initialTask?: string;
@@ -31,19 +39,28 @@ export function InvocationBuilder({
   pinned: boolean;
   onToggleFavorite: (skillId: string) => void;
   onTogglePinned: (skillId: string) => void;
+  workspace: LocalWorkspaceState;
+  onSaveRecipe: (input: PromptRecipeInput) => void;
+  onFeedback: (skillId: string, outcome: PromptFeedbackOutcome, copyAt: string) => void;
+  initialRecipe?: PromptRecipe;
 }) {
   const { language, t } = useLanguage();
-  const [task, setTask] = useState(initialTask);
+  const [task, setTask] = useState(initialRecipe?.task || initialTask);
+  const [requirements, setRequirements] = useState(initialRecipe?.requirements || "");
   const [result, setResult] = useState<PromptResult | null>(null);
   const [working, setWorking] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedAt, setCopiedAt] = useState("");
   const [error, setError] = useState("");
   const bucket = catalogHealthBucket(skill);
   const copyAllowed = bucket === "ready";
+  const effectiveTask = useMemo(() => taskWithRequirements(task, requirements, language), [language, requirements, task]);
   const promptResult = useMemo(
-    () => result || createInvocationPrompt(skill, task, language),
-    [language, result, skill, task],
+    () => result || createInvocationPrompt(skill, effectiveTask, language),
+    [effectiveTask, language, result, skill],
   );
+  const currentFeedback = workspace.personalLibrary.feedback[skill.id];
+  const feedbackValue = currentFeedback?.lastCopyAt === copiedAt ? currentFeedback.lastOutcome : undefined;
 
   async function enhanceWithAi() {
     setWorking(true);
@@ -52,7 +69,7 @@ export function InvocationBuilder({
       const response = await fetch("/api/prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Skill-Atlas-Language": language },
-        body: JSON.stringify({ skillId: skill.id, task, enhanceWithAi: true, language }),
+        body: JSON.stringify({ skillId: skill.id, task: effectiveTask, enhanceWithAi: true, language }),
       });
       const payload = (await response.json()) as PromptResult & { error?: string };
       if (!response.ok) throw new Error(payload.error || t("AI 增强失败", "AI enhancement failed"));
@@ -69,13 +86,16 @@ export function InvocationBuilder({
     setError("");
     try {
       await navigator.clipboard.writeText(promptResult.prompt);
+      const copyTimestamp = new Date().toISOString();
       recordPromptCopy({
         skillId: skill.id,
         skillName: skill.name,
         displayName: skill.displayName,
         language,
         journeyStartedAt,
+        copiedAt: copyTimestamp,
       });
+      setCopiedAt(copyTimestamp);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2_000);
     } catch {
@@ -100,12 +120,7 @@ export function InvocationBuilder({
         <button type="button" data-active={pinned} aria-pressed={pinned} onClick={() => onTogglePinned(skill.id)}><Pin size={14} /> {pinned ? t("已置顶", "Pinned") : t("置顶", "Pin")}</button>
       </div>
 
-      <dl className="invocation-builder-facts">
-        <div><dt>{t("来源", "Source")}</dt><dd>{sourceKindLabel(skill.source.kind, language)}</dd></div>
-        <div><dt>{t("权限", "Permission")}</dt><dd>{permissionLabel(skill.source.permission, language)}</dd></div>
-        <div><dt>{t("调用", "Invocation")}</dt><dd>{skill.allowImplicitInvocation ? t("可自动匹配", "May auto-match") : t("需要点名", "Explicit only")}</dd></div>
-        <div><dt>{t("环境", "Environment")}</dt><dd>{environmentStatusLabel(skill.environmentStatus, language)}</dd></div>
-      </dl>
+      <CapabilityImprint skill={skill} workspace={workspace} task={task} />
 
       <p className="invocation-builder-purpose">{language === "zh" ? translatedSkillDescription(skill) : skill.description}</p>
 
@@ -134,6 +149,21 @@ export function InvocationBuilder({
         />
       </label>
 
+      <label className="invocation-task-field invocation-requirements-field" htmlFor={`invocation-requirements-${skill.id}`}>
+        <span>{t("自定义要求（可选）", "Custom requirements (optional)")}</span>
+        <textarea
+          id={`invocation-requirements-${skill.id}`}
+          value={requirements}
+          onChange={(event) => {
+            setRequirements(event.target.value.slice(0, 4_000));
+            setResult(null);
+            setError("");
+          }}
+          placeholder={t("例如：使用中文、先给方案、不要修改配置…", "For example: use English, propose a plan first, do not change configuration…")}
+          rows={2}
+        />
+      </label>
+
       <section className="invocation-prompt-preview" aria-label={t("提示词预览", "Prompt preview")}>
         <header>
           <span>{t("实时本地提示词", "Live local Prompt")}</span>
@@ -153,12 +183,14 @@ export function InvocationBuilder({
       </div>
 
       </div>
+      <RecipeSavePanel skill={skill} task={task} requirements={requirements} onSave={onSaveRecipe} />
 
       <footer className="invocation-builder-copy">
         <button className="button button-primary button-wide" type="button" disabled={!copyAllowed} onClick={() => void copyPrompt()}>
           {copied ? <Check size={16} /> : <Copy size={16} />}
           {copied ? t("已复制，可前往 Codex", "Copied — continue in Codex") : copyAllowed ? t("复制调用 Prompt", "Copy invocation Prompt") : t("解决问题后才可复制", "Resolve issues before copying")}
         </button>
+        {copiedAt && <PromptFeedback value={feedbackValue} onChange={(outcome) => onFeedback(skill.id, outcome, copiedAt)} />}
       </footer>
     </aside>
   );

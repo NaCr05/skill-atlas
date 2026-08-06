@@ -35,6 +35,7 @@ import {
 import { localeFor } from "@/core/i18n";
 import { translateMessage } from "@/core/i18n/messages";
 import { medianCopyJourneyMs, recordZeroResultSearch, type LocalWorkspaceState } from "@/core/local-workspace";
+import type { SkillWorkflowInput } from "@/core/personal-library";
 import { recommendSkills } from "@/core/skills/recommend";
 import { catalogResultGroups } from "@/core/skills/catalog";
 import type { SkillSummary } from "@/core/skills/types";
@@ -44,6 +45,7 @@ import { DiscoveryHistoryRail } from "./discovery-history-rail";
 import { useLanguage } from "./language-provider";
 import { isAbortedRequest, useLatestRequests } from "./use-latest-request";
 import { MarketplaceCandidateZone } from "./task-discovery/marketplace-candidate-zone";
+import { SkillFlowComposer } from "./skill-flow-composer";
 
 function formatDuration(milliseconds: number | undefined, language: "zh" | "en"): string {
   if (milliseconds === undefined) return translateMessage("task.noData", language);
@@ -75,6 +77,7 @@ export function TaskRecommender({
   searchInputRef,
   onSelect,
   onClear,
+  onSaveWorkflow,
 }: {
   skills: SkillSummary[];
   workspace: LocalWorkspaceState;
@@ -83,6 +86,7 @@ export function TaskRecommender({
   searchInputRef: RefObject<HTMLInputElement | null>;
   onSelect: (skill: SkillSummary) => void;
   onClear: () => void;
+  onSaveWorkflow: (input: SkillWorkflowInput) => void;
 }) {
   const { language, m } = useLanguage();
   const task = query;
@@ -102,12 +106,12 @@ export function TaskRecommender({
   const restoredHistory = useRef(false);
   const median = useMemo(() => medianCopyJourneyMs(workspace), [workspace]);
   const recommendations = useMemo(
-    () => recommendSkills(skills, task, language),
-    [language, skills, task],
+    () => recommendSkills(skills, task, language, 5, workspace.personalLibrary.feedback),
+    [language, skills, task, workspace.personalLibrary.feedback],
   );
   const resultGroups = useMemo(
-    () => catalogResultGroups(skills, task, language, workspace.recentCopies.map((item) => item.skillId)),
-    [language, skills, task, workspace.recentCopies],
+    () => catalogResultGroups(skills, task, language, workspace.recentCopies.map((item) => item.skillId), workspace.personalLibrary.feedback),
+    [language, skills, task, workspace.personalLibrary.feedback, workspace.recentCopies],
   );
   const flattenedResults = useMemo(() => resultGroups.flatMap((group) => group.items), [resultGroups]);
   const byName = useMemo(() => new Map(skills.map((skill) => [skill.name, skill])), [skills]);
@@ -126,14 +130,14 @@ export function TaskRecommender({
       setAiRecommendation(restored.aiResponse || null);
       const names = restored.aiResponse
         ? restored.aiResponse.result.recommendations.map((item) => item.skillName)
-        : recommendSkills(skills, restored.query, language).slice(0, 3).map((item) => item.skill.name);
+        : recommendSkills(skills, restored.query, language, 5, workspace.personalLibrary.feedback).slice(0, 3).map((item) => item.skill.name);
       setSelectedIds(names.flatMap((name) => {
         const skill = byName.get(name);
         return skill ? [skill.id] : [];
       }).slice(0, 5));
     };
     restore();
-  }, [byName, language, setTask, skills, task]);
+  }, [byName, language, setTask, skills, task, workspace.personalLibrary.feedback]);
 
   function resetAiResults() {
     setAiRecommendation(null);
@@ -146,7 +150,7 @@ export function TaskRecommender({
     requests.cancel("task-ai");
     setAiWorking(null);
     const cleanTask = task.trim();
-    const next = recommendSkills(skills, cleanTask, language);
+    const next = recommendSkills(skills, cleanTask, language, 5, workspace.personalLibrary.feedback);
     setTask(cleanTask);
     setSubmitted(true);
     setSelectedIds(next.slice(0, 3).map((item) => item.skill.id));
@@ -189,7 +193,7 @@ export function TaskRecommender({
     setAiError("");
     const names = entry.aiResponse
       ? entry.aiResponse.result.recommendations.map((item) => item.skillName)
-      : recommendSkills(skills, entry.query, language).slice(0, 3).map((item) => item.skill.name);
+      : recommendSkills(skills, entry.query, language, 5, workspace.personalLibrary.feedback).slice(0, 3).map((item) => item.skill.name);
     setSelectedIds(names.flatMap((name) => {
       const skill = byName.get(name);
       return skill ? [skill.id] : [];
@@ -364,15 +368,15 @@ export function TaskRecommender({
         )}
 
         {selectedIds.length >= 2 && (
-          <div className="composition-entry">
-            <div>
-              <strong>{m("task.selectedCount", { count: selectedIds.length })}</strong>
-              <small>{m("task.compositionHint")}</small>
-            </div>
-            <button className="button button-ai" type="button" disabled={aiWorking !== null} onClick={() => void composeSkills()}>
-              <Workflow size={15} /> {aiWorking === "compose" ? m("task.composing") : m("task.compose")}
-            </button>
-          </div>
+          <SkillFlowComposer
+            skills={skills}
+            selectedIds={selectedIds}
+            task={task.trim()}
+            aiWorking={aiWorking !== null}
+            onSelectedIdsChange={(ids) => { setSelectedIds(ids); setComposition(null); }}
+            onComposeWithAi={() => void composeSkills()}
+            onSave={onSaveWorkflow}
+          />
         )}
       </div>
 
@@ -393,7 +397,14 @@ export function TaskRecommender({
             <small>{m("task.noteBodiesPrivate")}</small>
             <button
               type="button"
-              disabled={!workspace.favorites.length && !workspace.pinned.length && !Object.keys(workspace.notes).length && !workspace.recentCopies.length && !workspace.analytics.zeroResultSearches.length}
+              disabled={!workspace.favorites.length
+                && !workspace.pinned.length
+                && !Object.keys(workspace.notes).length
+                && !workspace.recentCopies.length
+                && !workspace.analytics.zeroResultSearches.length
+                && !workspace.personalLibrary.recipes.length
+                && !workspace.personalLibrary.workflows.length
+                && !Object.keys(workspace.personalLibrary.feedback).length}
               onClick={() => {
                 if (window.confirm(m("task.clearWorkspaceConfirm"))) onClear();
               }}
