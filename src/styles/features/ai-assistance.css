@@ -213,7 +213,19 @@
 }
 
 @media (max-width: 760px) {
-  .task-action-stack { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
+  .task-action-stack {
+    grid-template-rows: none;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .task-action-stack .button {
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 5px;
+    font-size: 0.68rem;
+  }
+  .task-action-label-long { display: none; }
+  .task-action-label-short { display: inline; }
   .composition-entry,
   .ai-entry-panel { align-items: stretch; flex-direction: column; }
   .composition-entry .button,

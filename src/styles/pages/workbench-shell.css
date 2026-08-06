@@ -1,0 +1,304 @@
+/* Skill Atlas workbench shell */
+.skip-link {
+  position: fixed;
+  z-index: 200;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  color: white;
+  background: var(--blue);
+  transform: translateY(-150%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.app-stage {
+  min-width: 0;
+}
+
+.app-sidebar {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  display: flex;
+  height: 100dvh;
+  min-height: 640px;
+  padding: 28px 18px 20px;
+  color: #eef3ff;
+  background:
+    linear-gradient(155deg, rgb(49 87 213 / 16%), transparent 34%),
+    var(--sidebar);
+  flex-direction: column;
+}
+
+.app-sidebar .brand {
+  gap: 13px;
+  padding: 0 8px;
+}
+
+.app-sidebar .brand strong {
+  font-size: 1rem;
+}
+
+.app-sidebar .brand small {
+  color: var(--sidebar-muted);
+}
+
+.sidebar-section-label {
+  margin: 26px 12px 10px;
+  color: #70809f;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sidebar-nav-groups {
+  margin-top: 22px;
+}
+
+.sidebar-menu-toggle {
+  display: none;
+}
+
+.sidebar-nav-group:first-child .sidebar-section-label {
+  margin-top: 0;
+}
+
+.app-sidebar .main-nav {
+  display: grid;
+  gap: 6px;
+}
+
+.app-sidebar .main-nav a {
+  min-height: 46px;
+  padding: 0 13px;
+  color: #b9c4da;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  font-size: 0.86rem;
+}
+
+.app-sidebar .main-nav a:hover {
+  color: white;
+  background: rgb(255 255 255 / 6%);
+}
+
+.app-sidebar .main-nav a[data-active="true"] {
+  color: white;
+  border-color: rgb(120 146 255 / 22%);
+  background: rgb(49 87 213 / 28%);
+  box-shadow: inset 3px 0 0 var(--electric);
+}
+
+.sidebar-status {
+  margin-top: auto;
+  padding: 16px;
+  border: 1px solid rgb(255 255 255 / 11%);
+  border-radius: 5px;
+  background: rgb(255 255 255 / 4%);
+}
+
+.sidebar-status > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #bfe4d8;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.sidebar-status > span svg {
+  color: #52c8a4;
+}
+
+.sidebar-status p {
+  margin: 10px 0 18px;
+  color: #8e9bb6;
+  font-size: 0.66rem;
+  line-height: 1.55;
+}
+
+.sidebar-status code {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #8291ad;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+}
+
+.workbench-page {
+  width: min(100%, 1560px);
+  min-height: calc(100dvh - 70px);
+  margin: 0 auto;
+  padding: 42px clamp(24px, 3vw, 48px) 80px;
+}
+
+.workbench-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 28px;
+}
+
+.workbench-header h1 {
+  margin: 8px 0 5px;
+  font-family: Bahnschrift, "Microsoft YaHei UI", sans-serif;
+  font-size: clamp(2.45rem, 4vw, 4.5rem);
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.workbench-header p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.6;
+}
+
+.catalog-header {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.catalog-header h1 {
+  margin-top: 6px;
+  font-size: clamp(2rem, 3.2vw, 2.5rem);
+  letter-spacing: -0.03em;
+}
+
+.catalog-header p {
+  max-width: 760px;
+  font-size: 0.9rem;
+}
+
+.workbench-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.workbench-stats article {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 14px;
+  min-width: 0;
+  padding: 17px 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper);
+}
+
+.workbench-stats article::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--blue);
+  content: "";
+  opacity: 0.22;
+}
+
+.workbench-stats article[data-alert="true"]::after {
+  background: var(--amber);
+  opacity: 1;
+}
+
+.workbench-stats span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.workbench-stats span svg {
+  color: var(--blue);
+}
+
+.workbench-stats strong {
+  grid-row: span 2;
+  font-family: Bahnschrift, sans-serif;
+  font-size: 1.85rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.workbench-stats small {
+  overflow: hidden;
+  color: #8994a7;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scan-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper);
+}
+
+.scan-summary strong {
+  font-family: Bahnschrift, "Microsoft YaHei UI", sans-serif;
+  font-size: 0.82rem;
+}
+
+.scan-summary span {
+  color: var(--green);
+}
+
+.scan-summary span[data-alert="true"] {
+  color: var(--amber);
+}
+
+.scan-status > div {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.scan-status span {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.scan-status small {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+
+.scan-status .button {
+  min-height: 36px;
+  padding: 0 11px;
+}
+
+.is-spinning {
+  animation: skill-atlas-spin 800ms linear infinite;
+}
+
+@keyframes skill-atlas-spin {
+  to { transform: rotate(360deg); }
+}

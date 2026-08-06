@@ -4,10 +4,14 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-06
+
 ### Added
 
 - A catalog-first home page with one bilingual command for exact lookup and task matching, action-oriented health buckets, a desktop filter/results/Builder workspace, a medium-screen drawer, and a mobile bottom sheet.
 - Keyboard navigation for catalog recommendations, responsive filter dismissal, and invocation dialogs with focus trapping and restoration.
+- Bounded 20-item catalog pagination, with deterministic 500/1,000-Skill performance coverage.
+- Responsive regression coverage for 1440px, 768px, and 360px layouts in Chinese and English.
 
 - Phase-by-phase operation details for preflight, download, backup, replacement, verification, rollback, and completion, streamed into an accessible details drawer.
 - A Backups & Archives workspace with storage totals, update-backup and disabled-Skill inventory, recovery handoffs, and fingerprint-verified reviewed cleanup.
@@ -50,6 +54,11 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 - A shared path renderer used across details, settings, installation, updates, operations, storage, and trash so Windows and repository paths wrap only at directory separators.
 
 ### Fixed
+
+- The invocation Builder now opens only after an explicit Skill selection; its content scrolls independently while the copy action remains visible at the bottom of a 1440 × 900 viewport.
+- Tablet navigation now uses a keyboard-accessible menu instead of a clipped horizontal strip.
+- The 360px catalog compresses secondary chrome and keeps personal usage insights collapsed, placing the first Skill at approximately 450px from the viewport top.
+- Catalog rendering no longer mounts every matching Skill at once, preventing multi-thousand-pixel pages for large inventories.
 
 - Public screenshot capture now targets the catalog home page and selects a deterministic fixture Skill instead of waiting for a graph-only layout control.
 - Trash-page responsive styles no longer hide labels or change navigation columns across unrelated mobile pages.
@@ -97,6 +106,7 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 - Optional SkillsMP, skills.sh, GitHub, and OpenAI integrations with graceful fallback.
 - Bilingual project documentation and GitHub community health files for the first public preview.
 
-[Unreleased]: https://github.com/NaCr05/skill-atlas/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/NaCr05/skill-atlas/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/NaCr05/skill-atlas/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/NaCr05/skill-atlas/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/NaCr05/skill-atlas/releases/tag/v0.1.0

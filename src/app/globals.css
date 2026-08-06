@@ -5,6 +5,9 @@
 @import "../styles/pages/skill-detail.css";
 @import "../styles/pages/marketplace.css";
 @import "../styles/pages/settings.css";
+@import "../styles/pages/workbench-shell.css";
+@import "../styles/features/task-discovery.css";
+@import "../styles/features/catalog-workbench.css";
 @import "../styles/pages/workbench.css";
 @import "../styles/components/discovery-history.css";
 @import "../styles/themes/dark-console.css";

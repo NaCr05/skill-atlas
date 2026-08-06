@@ -5,6 +5,7 @@
 **Know which Codex Skill to use, why it fits, and how to invoke it.**
 
 [![CI](https://github.com/NaCr05/skill-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/NaCr05/skill-atlas/actions/workflows/ci.yml)
+[![Release: v0.2.0](https://img.shields.io/badge/Release-v0.2.0-8ba2ff.svg)](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-f5b942.svg)](LICENSE)
 ![Node.js 20+](https://img.shields.io/badge/Node.js-20%2B-5fa04e)
 ![Platform: Windows](https://img.shields.io/badge/Platform-Windows-4b72ff)
@@ -42,7 +43,7 @@ As your Skill collection grows, remembering every Skill's purpose, trigger rules
 
 The home page is now the Skill catalog rather than a statistics dashboard. A single **Find a Skill** command accepts an exact name or a task description. Local matching is immediate; AI deep matching and marketplace discovery each require a separate explicit click before any external request is made.
 
-On desktop, the workspace is organized as **filters → results → invocation Builder**. Selecting a Skill shows provenance, permission, invocation policy, environment readiness, blockers, and a live Prompt in one place; copying stays disabled unless the Skill is ready. Medium screens move the Builder into a right drawer, while phones use a bottom sheet with trapped keyboard focus, Escape dismissal, and focus restoration. Favorites, pins, and recent copies organize the catalog; personal notes sit below the list; updates, disablement, and removal remain on the full detail and management surfaces.
+On desktop, the workspace is organized as **filters → results → invocation Builder**. No Skill is selected by default: the Builder appears only after an explicit choice, keeps its content independently scrollable, and keeps **Copy invocation Prompt** visible at the bottom. The catalog renders at most 20 matching Skills per page so 500- and 1,000-Skill inventories remain bounded. Tablets use a compact navigation menu and move the Builder into a right drawer; phones collapse secondary usage insights and use a bottom sheet with trapped keyboard focus, Escape dismissal, and focus restoration. Favorites, pins, and recent copies organize the catalog; personal notes sit below the list; updates, disablement, and removal remain on the full detail and management surfaces.
 
 Health filters use three action-oriented buckets: **Ready** can generate and copy a Prompt, **Needs review** has an entry or metadata issue, and **Needs setup** is missing a structured dependency or environment condition. The knowledge graph remains available from navigation but no longer occupies the default route.
 
@@ -50,7 +51,7 @@ Health filters use three action-oriented buckets: **Ready** can generate and cop
 
 ### Windows installer (no command line)
 
-The repository now includes a Windows installer pipeline. When a GitHub Release contains a `Skill-Atlas-Setup-*.exe` asset, download and run it, then open **Skill Atlas** from the Start menu or its optional desktop shortcut. The installer bundles its own Node.js runtime. If the current release has no installer asset, use the source launcher below. See [Windows distribution](docs/windows-distribution.md) for build and release details.
+Version **v0.2.0** is the first release aligned with the complete lifecycle-management workspace. Download `Skill-Atlas-Setup-0.2.0.exe` from the [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0), run it, then open **Skill Atlas** from the Start menu or its optional desktop shortcut. The installer bundles its own Node.js runtime. If the release asset is temporarily unavailable, use the source launcher below. See [Windows distribution](docs/windows-distribution.md) for build and release details.
 
 ### Run from source
 

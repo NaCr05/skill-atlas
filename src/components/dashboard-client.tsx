@@ -6,9 +6,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { localeFor, localizeGeneratedText, sourceLabel } from "@/core/i18n";
 import type { BatchUpdateOverview, BatchUpdateRecord } from "@/core/lifecycle/update-batch";
 import { catalogHealthBucket, catalogQuerySkillIds } from "@/core/skills/catalog";
+import { paginateCatalog } from "@/core/skills/pagination";
 import type { SkillInventorySummary, SkillSummary } from "@/core/skills/types";
 import { CatalogFilterRail, type CatalogCollectionFilter, type CatalogStatusFilter } from "./catalog-filter-rail";
 import { CatalogPersonalNote } from "./catalog-personal-note";
+import { CatalogPagination } from "./catalog-pagination";
 import { InvocationBuilder } from "./invocation-builder";
 import { useLanguage } from "./language-provider";
 import { SkillCard } from "./skill-card";
@@ -34,9 +36,8 @@ export function DashboardClient({
   const [source, setSource] = useState("all");
   const [collection, setCollection] = useState<CatalogCollectionFilter>("all");
   const [view, setView] = useState<ViewMode>("compact");
-  const [selectedId, setSelectedId] = useState(
-    initialFocusedSkill?.id ?? initialInventory.skills.find((skill) => skill.environmentStatus === "ready")?.id ?? initialInventory.skills[0]?.id ?? "",
-  );
+  const [selectedId, setSelectedId] = useState(initialFocusedSkill?.id ?? "");
+  const [page, setPage] = useState(1);
   const [rescanning, setRescanning] = useState(false);
   const [rescanError, setRescanError] = useState("");
   const [updateRecords, setUpdateRecords] = useState<BatchUpdateRecord[]>([]);
@@ -93,7 +94,8 @@ export function DashboardClient({
     });
   }, [collection, inventory.skills, language, query, source, status, updateRecords, workspace.favorites, workspace.pinned, workspace.recentCopies]);
 
-  const selectedSkill = filtered.find((skill) => skill.id === selectedId) ?? filtered[0] ?? null;
+  const catalogPage = useMemo(() => paginateCatalog(filtered, page), [filtered, page]);
+  const selectedSkill = selectedId ? inventory.skills.find((skill) => skill.id === selectedId) ?? null : null;
   const hasFilters = Boolean(query) || status !== "all" || source !== "all" || collection !== "all";
 
   function selectSkill(skill: SkillSummary) {
@@ -106,6 +108,7 @@ export function DashboardClient({
     setStatus("all");
     setSource("all");
     setCollection("all");
+    setPage(1);
     selectSkill(skill);
     window.setTimeout(() => document.querySelector(".catalog-workspace")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   }
@@ -115,6 +118,7 @@ export function DashboardClient({
     setStatus("all");
     setSource("all");
     setCollection("all");
+    setPage(1);
     searchRef.current?.focus();
   }
 
@@ -126,6 +130,7 @@ export function DashboardClient({
       const payload = (await response.json()) as SkillInventorySummary & { error?: string };
       if (!response.ok) throw new Error(payload.error || t("重新扫描失败", "Rescan failed"));
       setInventory(payload);
+      setPage(1);
       return payload;
     } catch (error) {
       setRescanError(error instanceof Error ? error.message : t("重新扫描失败", "Rescan failed"));
@@ -164,13 +169,16 @@ export function DashboardClient({
         skills={inventory.skills}
         workspace={workspace}
         query={query}
-        onQueryChange={setQuery}
+        onQueryChange={(nextQuery) => {
+          setQuery(nextQuery);
+          setPage(1);
+        }}
         searchInputRef={searchRef}
         onSelect={selectRecommendation}
         onClear={clearWorkspace}
       />
 
-      <section className="catalog-workspace" data-view={view} aria-label={t("技能目录工作区", "Skill catalog workspace")}>
+      <section className="catalog-workspace" data-view={view} data-builder={selectedSkill ? "open" : "closed"} aria-label={t("技能目录工作区", "Skill catalog workspace")}>
         <CatalogFilterRail
           status={status}
           source={source}
@@ -180,9 +188,9 @@ export function DashboardClient({
           resultCount={filtered.length}
           totalCount={inventory.skills.length}
           hasFilters={hasFilters}
-          onStatusChange={setStatus}
-          onSourceChange={setSource}
-          onCollectionChange={setCollection}
+          onStatusChange={(nextStatus) => { setStatus(nextStatus); setPage(1); }}
+          onSourceChange={(nextSource) => { setSource(nextSource); setPage(1); }}
+          onCollectionChange={(nextCollection) => { setCollection(nextCollection); setPage(1); }}
           onReset={resetFilters}
         />
 
@@ -190,10 +198,10 @@ export function DashboardClient({
           <header className="catalog-list-toolbar">
             <div><strong>{t("本地 Skill", "Local Skills")}</strong><span>{t(`显示 ${filtered.length} / ${inventory.skills.length}`, `Showing ${filtered.length} / ${inventory.skills.length}`)}</span></div>
             <div className="view-switcher" aria-label={t("切换列表样式", "Change list view")}>
-              <button type="button" data-active={view === "compact"} onClick={() => setView("compact")} aria-label={t("紧凑视图", "Compact view")}>
+              <button type="button" data-active={view === "compact"} onClick={() => { setView("compact"); setPage(1); }} aria-label={t("紧凑视图", "Compact view")}>
                 <List size={18} aria-hidden="true" /> <span>{t("紧凑", "Compact")}</span>
               </button>
-              <button type="button" data-active={view === "cards"} onClick={() => setView("cards")} aria-label={t("卡片视图", "Card view")}>
+              <button type="button" data-active={view === "cards"} onClick={() => { setView("cards"); setPage(1); }} aria-label={t("卡片视图", "Card view")}>
                 <LayoutGrid size={17} aria-hidden="true" /> <span>{t("卡片", "Cards")}</span>
               </button>
             </div>
@@ -203,7 +211,7 @@ export function DashboardClient({
             <div className="inventory-results">
             {view === "cards" ? (
               <div className="skill-grid" aria-label={t("技能卡片列表", "Skill card list")}>
-                {filtered.map((skill) => (
+                {catalogPage.items.map((skill) => (
                   <SkillCard
                     key={skill.id}
                     skill={skill}
@@ -219,7 +227,7 @@ export function DashboardClient({
                 <div className="compact-list-heading" aria-hidden="true">
                   <span>{t("技能名称", "Skill")}</span><span>{t("状态", "Status")}</span><span>{t("来源", "Source")}</span><span>{t("文件", "Files")}</span>
                 </div>
-                {filtered.map((skill) => (
+                {catalogPage.items.map((skill) => (
                   <button
                     type="button"
                     className="compact-skill-row"
@@ -243,6 +251,15 @@ export function DashboardClient({
                 ))}
               </div>
             )}
+            <CatalogPagination
+              page={catalogPage}
+              onPageChange={(nextPage) => {
+                setPage(nextPage);
+                setSelectedId("");
+                setBuilderOpen(false);
+                window.setTimeout(() => document.querySelector(".catalog-results-column")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+              }}
+            />
             </div>
           ) : (
             <section className="empty-state">

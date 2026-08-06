@@ -5,6 +5,7 @@
 **知道该用哪个 Codex Skill、为什么适合，以及怎样正确调用。**
 
 [![CI](https://github.com/NaCr05/skill-atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/NaCr05/skill-atlas/actions/workflows/ci.yml)
+[![版本：v0.2.0](https://img.shields.io/badge/Release-v0.2.0-8ba2ff.svg)](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0)
 [![许可证：MIT](https://img.shields.io/badge/License-MIT-f5b942.svg)](LICENSE)
 ![Node.js 20+](https://img.shields.io/badge/Node.js-20%2B-5fa04e)
 ![平台：Windows](https://img.shields.io/badge/Platform-Windows-4b72ff)
@@ -41,7 +42,7 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 
 首页现在就是技能目录，而不是统计面板。顶部只有一个“查找 Skill”入口：输入精确名称可以直接定位，输入任务描述会立即生成本地推荐；AI 深度推荐和市场搜索始终需要分别点击才会调用外部服务。
 
-桌面端使用“筛选栏 → 结果清单 → 调用 Builder”三栏布局。选中一个 Skill 后，右侧会同时显示来源、权限、调用方式、环境状态、阻断原因和实时 Prompt；只有健康状态为“已就绪”的 Skill 才能复制。中等屏幕把 Builder 放入右侧抽屉，手机端则使用底部面板，并保留键盘焦点、Esc 关闭和关闭后焦点恢复。收藏、置顶和最近复制属于目录整理；个人备注位于清单下方；更新、停用和删除仍在完整详情或管理页面中完成。
+桌面端使用“筛选栏 → 结果清单 → 调用 Builder”三栏布局。页面默认不选中任何 Skill；只有用户明确选择后才显示 Builder。Builder 内容区独立滚动，“复制调用 Prompt”固定保留在底部。目录每页最多渲染 20 个匹配项，500/1000 个 Skill 的大清单也不会一次挂载全部节点。平板端改用紧凑导航菜单并把 Builder 放入右侧抽屉；手机端默认收起个人助手等次要信息，并使用保留焦点圈定、Esc 关闭和焦点恢复的底部面板。收藏、置顶和最近复制属于目录整理；个人备注位于清单下方；更新、停用和删除仍在完整详情或管理页面中完成。
 
 健康筛选采用三种面向行动的状态：**已就绪**表示可以生成并复制 Prompt；**需要审查**表示存在重复入口或元数据问题；**需要配置**表示缺少结构化依赖或外部环境条件。知识图谱仍可从左侧导航进入，但不再占用默认首页。
 
@@ -49,7 +50,7 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 
 ### Windows 安装包（无需命令行）
 
-仓库现在已经包含 Windows 安装包构建流程。当某个 [GitHub Release](https://github.com/NaCr05/skill-atlas/releases/latest) 附带 `Skill-Atlas-Setup-*.exe` 时，可以直接下载安装，再从开始菜单或可选的桌面快捷方式打开 **Skill Atlas**。安装包自带 Node.js 运行环境；如果当前 Release 尚未提供安装包，请使用下面的源码启动器。构建和发布方式见 [Windows 分发说明](docs/windows-distribution.md)。
+**v0.2.0** 是首个与完整生命周期管理工作台对齐的正式版本。可从 [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0) 下载 `Skill-Atlas-Setup-0.2.0.exe`，安装后从开始菜单或可选的桌面快捷方式打开 **Skill Atlas**。安装包自带 Node.js 运行环境；如果 Release 附件仍在构建，可先使用下面的源码启动器。构建和发布方式见 [Windows 分发说明](docs/windows-distribution.md)。
 
 ### 从源码启动
 

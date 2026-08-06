@@ -2,7 +2,7 @@
 
 import { Copy, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
 import { AccessibleDialog } from "./accessible-dialog";
 import { useLanguage } from "./language-provider";
@@ -34,8 +34,33 @@ export function ResponsiveBuilderShell({
 }) {
   const { t } = useLanguage();
   const compact = useSyncExternalStore(subscribe, compactSnapshot, () => false);
+  const desktopRef = useRef<HTMLDivElement>(null);
 
-  if (!compact) return <div className="responsive-builder-desktop">{children}</div>;
+  useEffect(() => {
+    if (compact) return;
+    let frame = 0;
+    const updateAvailableHeight = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => {
+        const container = desktopRef.current;
+        if (!container) return;
+        const top = Math.max(18, container.getBoundingClientRect().top);
+        const available = Math.max(320, window.innerHeight - top - 18);
+        container.style.setProperty("--builder-available-height", `${available}px`);
+      });
+    };
+
+    updateAvailableHeight();
+    window.addEventListener("resize", updateAvailableHeight);
+    window.addEventListener("scroll", updateAvailableHeight, { passive: true });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateAvailableHeight);
+      window.removeEventListener("scroll", updateAvailableHeight);
+    };
+  }, [compact]);
+
+  if (!compact) return <div ref={desktopRef} className="responsive-builder-desktop">{children}</div>;
 
   return (
     <div className="responsive-builder-compact" data-dialog-open={open}>

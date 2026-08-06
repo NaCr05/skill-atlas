@@ -78,8 +78,10 @@ describe("P1 architecture boundaries", () => {
   it("keeps globals.css as an ordered entry point instead of a page stylesheet", async () => {
     const location = path.join(process.cwd(), "src", "app", "globals.css");
     const content = await readFile(location, "utf8");
+    const imports = content.trim().split(/\r?\n/);
 
-    expect(content.trim().split(/\r?\n/)).toHaveLength(17);
+    expect(imports.length).toBeGreaterThan(0);
+    expect(imports.every((line) => /^@import "\.\.\/styles\/.+\.css";$/.test(line))).toBe(true);
     expect(content).toContain('../styles/tokens.css');
     expect(content).toContain('../styles/base.css');
     expect(content).toContain('../styles/pages/workbench.css');
@@ -87,5 +89,8 @@ describe("P1 architecture boundaries", () => {
     expect(content).toContain('../styles/pages/operations.css');
     expect(content).toContain('../styles/pages/storage.css');
     expect(content).toContain('../styles/pages/management.css');
+    expect(imports.indexOf('@import "../styles/tokens.css";')).toBeLessThan(imports.indexOf('@import "../styles/base.css";'));
+    expect(imports.indexOf('@import "../styles/features/task-discovery.css";')).toBeLessThan(imports.indexOf('@import "../styles/pages/workbench.css";'));
+    expect(imports.indexOf('@import "../styles/themes/dark-console.css";')).toBeGreaterThan(imports.indexOf('@import "../styles/pages/workbench.css";'));
   });
 });

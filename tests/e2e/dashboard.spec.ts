@@ -21,6 +21,7 @@ test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await expect(page.locator(".scan-summary")).toContainText("磁盘");
 
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("explicit");
+  await page.locator(".skill-card").filter({ hasText: "Explicit Interview" }).click();
   await expect(page.getByRole("heading", { name: "Explicit Interview" })).toBeVisible();
   const builder = page.locator(".invocation-builder");
   await expect(page.getByRole("heading", { name: "ready-skill" })).toBeHidden();
@@ -65,7 +66,7 @@ test("catalog command supports keyboard selection", async ({ page }) => {
   await command.press("ArrowDown");
   await expect(command).toHaveAttribute("aria-activedescendant", /catalog-option-/);
   await command.press("Enter");
-  await expect(page.locator(".invocation-builder").getByRole("heading", { name: "ready-skill" })).toBeVisible();
+  await expect(page.locator(".invocation-builder").getByRole("heading", { name: "Explicit Interview" })).toBeVisible();
 });
 
 test("responsive catalog filters and invocation Builder restore keyboard focus", async ({ page }) => {
@@ -79,9 +80,17 @@ test("responsive catalog filters and invocation Builder restore keyboard focus",
   await expect(filterToggle).toHaveAttribute("aria-expanded", "false");
   await expect(filterToggle).toBeFocused();
 
+  const selectedRow = page.locator(".compact-skill-row").filter({ hasText: "ready-skill" });
+  await selectedRow.click();
+  let dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(selectedRow).toBeFocused();
+
   const builderTrigger = page.getByRole("button", { name: "打开调用 Builder" });
   await builderTrigger.click();
-  const dialog = page.getByRole("dialog");
+  dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog.getByLabel("这次想让它做什么？")).toBeFocused();
   await page.keyboard.press("Escape");
@@ -229,6 +238,7 @@ test("personal Skills use a reviewed, recoverable removal flow", async ({ page }
 
   await page.goto("/skills");
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
+  await page.locator(".compact-skill-row").filter({ hasText: "ready-skill" }).click();
   await Promise.all([
     page.waitForURL(/\/skills\//),
     page.locator(".invocation-builder").getByRole("link", { name: "完整详情" }).click(),
@@ -259,6 +269,7 @@ test("personal Skills use a reviewed, recoverable removal flow", async ({ page }
 
   await page.goto("/skills");
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
+  await page.locator(".compact-skill-row").filter({ hasText: "ready-skill" }).click();
   await Promise.all([
     page.waitForURL(/\/skills\//),
     page.locator(".invocation-builder").getByRole("link", { name: "完整详情" }).click(),
@@ -320,6 +331,7 @@ test("personal Skills can be disabled and re-enabled in place", async ({ page })
 
   await page.goto("/skills");
   await page.getByPlaceholder("搜索 Skill，或描述你想完成的任务…").fill("ready-skill");
+  await page.locator(".compact-skill-row").filter({ hasText: "ready-skill" }).click();
   await Promise.all([
     page.waitForURL(/\/skills\//),
     page.locator(".invocation-builder").getByRole("link", { name: "完整详情" }).click(),
@@ -379,6 +391,7 @@ test("task recommendation and personal workspace remain local", async ({ page, c
 
   await page.reload();
   await page.locator(".catalog-filter-panel").getByRole("button", { name: /收藏 1/ }).click();
+  await page.locator(".compact-skill-row").filter({ hasText: "ready-skill" }).click();
   await page.locator(".catalog-personal-note").getByText(/个人备注/).click();
   await expect(page.locator(".catalog-personal-note").getByLabel("个人备注")).toHaveValue("发布前检查变更范围和版本号");
   await expect(page.locator(".catalog-filter-panel").getByRole("button", { name: /最近复制 1/ })).toBeVisible();
@@ -607,6 +620,7 @@ test("AI provider settings show the safe server-side failure reason", async ({ p
 test("mobile layout has no horizontal overflow", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/skills");
+  await page.getByRole("button", { name: "打开导航" }).click();
   await expect(page.getByRole("link", { name: "技能目录" }).locator("span")).toBeVisible();
   await expect(page.getByRole("link", { name: "环境设置" }).locator("span")).toBeVisible();
   const chineseOverflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

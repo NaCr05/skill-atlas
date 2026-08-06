@@ -1,6 +1,6 @@
 {
   "name": "skill-atlas",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "A Windows-first local control panel for discovering, understanding, and safely using Codex Skills.",
   "license": "MIT",
@@ -31,6 +31,7 @@
     "package:windows:stage": "npm run build && node scripts/windows/package-windows.mjs --stage-only",
     "package:windows": "npm run build && node scripts/windows/package-windows.mjs",
     "verify:windows-stage": "node scripts/windows/verify-stage.mjs",
+    "test:windows-installer": "node scripts/windows/smoke-installer.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {

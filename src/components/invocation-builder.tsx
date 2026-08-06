@@ -85,6 +85,7 @@ export function InvocationBuilder({
 
   return (
     <aside className="invocation-builder" aria-labelledby={`invocation-builder-${skill.id}`}>
+      <div className="invocation-builder-scroll">
       <header className="invocation-builder-header">
         <div>
           <span className="eyebrow">{t("调用 Builder", "INVOCATION BUILDER")}</span>
@@ -149,6 +150,8 @@ export function InvocationBuilder({
           <Sparkles size={15} /> {working ? t("AI 增强中…", "Enhancing…") : t("使用 AI 增强", "Enhance with AI")}
         </button>
         <Link className="button button-quiet" href={`/skills/${skill.id}`}>{t("完整详情", "Full details")} <ArrowUpRight size={14} /></Link>
+      </div>
+
       </div>
 
       <footer className="invocation-builder-copy">

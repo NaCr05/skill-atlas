@@ -20,6 +20,10 @@ jobs:
       - run: npm ci
       - run: choco install innosetup --yes --no-progress
       - run: npm run package:windows
+      - name: Smoke-test install, upgrade, rollback, and uninstall
+        run: npm run test:windows-installer
+        env:
+          SKILL_ATLAS_RUN_INSTALLER_SMOKE: "1"
       - uses: actions/upload-artifact@v4
         with:
           name: skill-atlas-windows-installer

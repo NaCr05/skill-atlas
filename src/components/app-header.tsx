@@ -1,8 +1,9 @@
 "use client";
 
-import { Archive, Boxes, CheckCircle2, LayoutGrid, ListChecks, Network, Settings, Store, Trash2 } from "lucide-react";
+import { Archive, Boxes, CheckCircle2, LayoutGrid, ListChecks, Menu, Network, Settings, Store, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { LanguageToggle, useLanguage } from "./language-provider";
 
@@ -31,10 +32,27 @@ const navigationGroups = [
 export function AppHeader() {
   const pathname = usePathname();
   const { t } = useLanguage();
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const navigationRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!navigationOpen) return;
+    navigationRef.current?.querySelector<HTMLAnchorElement>("a")?.focus();
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setNavigationOpen(false);
+      toggleRef.current?.focus();
+    }
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [navigationOpen]);
 
   return (
     <aside className="app-sidebar">
-      <Link className="brand" href="/" aria-label={t("Skill Atlas 首页", "Skill Atlas home")}>
+      <Link className="brand" href="/" aria-label={t("Skill Atlas 首页", "Skill Atlas home")} onClick={() => setNavigationOpen(false)}>
         <span className="brand-mark" aria-hidden="true">
           <i />
           <i />
@@ -47,7 +65,20 @@ export function AppHeader() {
         </span>
       </Link>
 
-      <div className="sidebar-nav-groups">
+      <button
+        ref={toggleRef}
+        className="sidebar-menu-toggle"
+        type="button"
+        aria-expanded={navigationOpen}
+        aria-controls="primary-navigation"
+        aria-label={navigationOpen ? t("关闭导航", "Close navigation") : t("打开导航", "Open navigation")}
+        onClick={() => setNavigationOpen((current) => !current)}
+      >
+        {navigationOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
+        <span>{t("菜单", "Menu")}</span>
+      </button>
+
+      <div id="primary-navigation" ref={navigationRef} className="sidebar-nav-groups" data-open={navigationOpen}>
         {navigationGroups.map((group) => (
           <section className="sidebar-nav-group" key={group.en} aria-labelledby={`sidebar-${group.en.toLocaleLowerCase()}`}>
             <div className="sidebar-section-label" id={`sidebar-${group.en.toLocaleLowerCase()}`}>{t(group.zh, group.en)}</div>
@@ -57,7 +88,7 @@ export function AppHeader() {
                   ? pathname === "/" || pathname.startsWith("/skills")
                   : pathname === href || pathname.startsWith(`${href}/`);
                 return (
-                  <Link key={href} href={href} data-active={active} aria-current={active ? "page" : undefined} aria-label={t(zh, en)}>
+                  <Link key={href} href={href} data-active={active} aria-current={active ? "page" : undefined} aria-label={t(zh, en)} onClick={() => setNavigationOpen(false)}>
                     <Icon size={18} aria-hidden="true" />
                     <span>{t(zh, en)}</span>
                   </Link>

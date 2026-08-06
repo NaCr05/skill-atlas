@@ -4,11 +4,13 @@ import { Languages } from "lucide-react";
 import { createContext, useContext, useMemo, useState } from "react";
 
 import { LANGUAGE_COOKIE, type Language, pick } from "@/core/i18n";
+import { translateMessage, type MessageKey, type MessageValues } from "@/core/i18n/messages";
 
 interface LanguageContextValue {
   language: Language;
   setLanguage: (language: Language) => void;
   t: <T>(zh: T, en: T) => T;
+  m: (key: MessageKey, values?: MessageValues) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -35,6 +37,7 @@ export function LanguageProvider({
       applyLanguage(nextLanguage);
     },
     t: (zh, en) => pick(language, zh, en),
+    m: (key, values) => translateMessage(key, language, values),
   }), [language]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
