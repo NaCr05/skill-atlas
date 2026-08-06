@@ -23,7 +23,7 @@
   #define OutputDir "..\..\dist\windows\installer"
 #endif
 #ifndef OutputBaseFilename
-  #define OutputBaseFilename "Skill-Atlas-Setup-{#MyAppVersion}"
+  #define OutputBaseFilename "Skill-Atlas-Setup-" + MyAppVersion
 #endif
 
 [Setup]

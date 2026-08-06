@@ -13,6 +13,7 @@ describe("Windows distribution assets", () => {
     expect(installer).toContain("{autodesktop}");
     expect(installer).toContain("PrivilegesRequired=lowest");
     expect(installer).toContain("#ifndef SmokeMode");
+    expect(installer).toContain('#define OutputBaseFilename "Skill-Atlas-Setup-" + MyAppVersion');
     const smoke = await readFile(path.join(process.cwd(), "scripts/windows/smoke-installer.mjs"), "utf8");
     expect(smoke).toContain("SKILL_ATLAS_RUN_INSTALLER_SMOKE");
     expect(smoke).toContain("fresh-install");
