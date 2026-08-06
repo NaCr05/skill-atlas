@@ -169,5 +169,5 @@ try {
       console.error(error);
     }
   }
-  await rm(temporaryRoot, { recursive: true, force: true });
+  await rm(temporaryRoot, { recursive: true, force: true, maxRetries: 12, retryDelay: 250 });
 }
