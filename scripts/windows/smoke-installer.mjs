@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readdirSync } from "node:fs";
 import { access, cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -81,7 +82,14 @@ function install(installer, label) {
 }
 
 function uninstall(label) {
-  const uninstaller = path.join(installDirectory, "unins000.exe");
+  const entries = readdirSync(installDirectory);
+  const uninstallerName = entries
+    .filter((entry) => /^unins\d+\.exe$/i.test(entry))
+    .sort((left, right) => right.localeCompare(left, undefined, { numeric: true }))[0];
+  if (!uninstallerName) {
+    throw new Error(`${label} failed: no Inno Setup uninstaller was found in ${installDirectory}. Entries: ${entries.join(", ")}`);
+  }
+  const uninstaller = path.join(installDirectory, uninstallerName);
   run(uninstaller, [
     "/VERYSILENT",
     "/SUPPRESSMSGBOXES",
