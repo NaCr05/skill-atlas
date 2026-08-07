@@ -61,7 +61,7 @@ flowchart LR
 - `src/core/ai`: resolves OpenAI/DeepSeek routing, persists page-managed settings outside the repository, and protects saved credentials with Windows current-user DPAPI.
 - `src/app/api`: thin validated route handlers. Business rules stay in `src/core` for direct tests.
 - `src/components`: interface surfaces and confirmation checkpoints.
-- `scripts/startup/launcher.mjs`: owns Windows preflight, bounded free-port selection, server startup, readiness polling, and browser opening for both root launcher files.
+- `scripts/startup/launcher.mjs`: owns Windows preflight, bounded free-port selection, server startup, identity-verified readiness polling through `/api/health`, and browser opening for both root launcher files.
 - `scripts/windows/package-windows.mjs` and `packaging/windows`: stage the Next.js standalone output with the current Node runtime and compile the per-user Inno Setup installer.
 
 ## Startup model

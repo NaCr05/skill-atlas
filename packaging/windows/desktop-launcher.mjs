@@ -9,8 +9,10 @@ import { fileURLToPath } from "node:url";
 const appDir = path.dirname(fileURLToPath(import.meta.url));
 const logDir = path.join(process.env.LOCALAPPDATA || os.tmpdir(), "Skill Atlas");
 const logFile = path.join(logDir, "launcher.log");
+const identityHeader = "x-skill-atlas-app";
+const identityValue = "skill-atlas";
 async function log(message) { await mkdir(logDir, { recursive: true }); await appendFile(logFile, `${new Date().toISOString()} ${message}\n`).catch(() => undefined); }
-function requestReady(port) { return new Promise((resolve) => { const request = http.get({ hostname: "127.0.0.1", port, path: "/api/skills?summary=1", timeout: 800 }, (response) => { response.resume(); resolve(response.statusCode === 200); }); request.on("error", () => resolve(false)); request.on("timeout", () => { request.destroy(); resolve(false); }); }); }
+function requestReady(port) { return new Promise((resolve) => { const request = http.get({ hostname: "127.0.0.1", port, path: "/api/health", timeout: 800 }, (response) => { response.resume(); resolve(response.statusCode === 200 && response.headers[identityHeader] === identityValue); }); request.on("error", () => resolve(false)); request.on("timeout", () => { request.destroy(); resolve(false); }); }); }
 function portAvailable(port) { return new Promise((resolve) => { const server = net.createServer(); server.once("error", () => resolve(false)); server.listen(port, "127.0.0.1", () => server.close(() => resolve(true))); }); }
 async function choosePort() { for (let port = 3180; port < 3200; port += 1) { if (await requestReady(port)) return { port, running: true }; if (await portAvailable(port)) return { port, running: false }; } throw new Error("No available local port between 3180 and 3199."); }
 function openBrowser(url) { const child = spawn("cmd.exe", ["/d", "/s", "/c", "start", "", url], { detached: true, stdio: "ignore", windowsHide: true }); child.unref(); }

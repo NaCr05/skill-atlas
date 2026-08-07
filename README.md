@@ -56,30 +56,41 @@ The Builder's compact **Capability imprint** summarizes source and author, struc
 
 Version **v0.2.0** is the first release aligned with the complete lifecycle-management workspace. Download `Skill-Atlas-Setup-0.2.0.exe` from the [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0), run it, then open **Skill Atlas** from the Start menu or its optional desktop shortcut. The installer bundles its own Node.js runtime. If the release asset is temporarily unavailable, use the source launcher below. See [Windows distribution](docs/windows-distribution.md) for build and release details.
 
-### Run from source
+### Repeatable launch from this GitHub README (recommended source workflow)
 
-Requirements: Windows 10/11 and Node.js 20 or newer (npm is included).
+Requirements: Windows 10/11, Git, and Node.js 20 or newer (npm is included). If a previous Skill Atlas terminal is still running, press `Ctrl+C` there before starting again.
 
-Clone the project, enter its directory, and use the launcher for your terminal.
-
-```text
-git clone https://github.com/NaCr05/skill-atlas.git
-cd skill-atlas
-```
+Whenever you return to this README, copy the **complete block** for your current terminal. It clones into `%USERPROFILE%\skill-atlas` when needed; otherwise it updates the existing checkout to remote `main`, restores the locked dependencies, and starts the site.
 
 Command Prompt (CMD):
 
 ```bat
+cd /d "%USERPROFILE%"
+if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 start-skill-atlas.cmd
 ```
 
 PowerShell:
 
 ```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
+  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+}
+Set-Location $skillAtlasRepo
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-The launcher checks the project directory, Node.js, npm, dependencies, and local port. If dependencies are missing, run the exact repair command it prints (`npm ci` or `npm.cmd ci`) and launch again. It automatically selects a free port and opens the browser when the server is ready.
+Stop if any `git` or `npm` command reports an error instead of continuing with stale code. `git pull --ff-only` will not overwrite local commits. The launcher selects a free port and verifies the Skill Atlas identity endpoint; use only the address opened after the terminal prints `Browser opened:` and do not type a fixed `127.0.0.1:3000` address.
 
 Then:
 

@@ -12,6 +12,10 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 - A compact capability imprint in the invocation Builder showing source and author, structural validity, environment readiness, invocation mode, dependencies, recent use, and the active recommendation reason.
 - A dedicated bilingual **Recipes & flows** workspace, with recipe/workflow editing, reuse counts, backup/export coverage, and responsive layouts.
 
+### Fixed
+
+- Source and packaged Windows launchers now verify the Skill Atlas identity response before opening a browser, so another local web app on port 3000 cannot be mistaken for Skill Atlas; the quick-start guide also distinguishes updating an existing clone from creating a new one and no longer links to a fixed port.
+
 ## [0.2.0] - 2026-08-06
 
 ### Added

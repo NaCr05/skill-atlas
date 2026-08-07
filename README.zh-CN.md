@@ -55,30 +55,41 @@ Builder 中的**能力印记**会把来源与作者、结构、环境、调用�
 
 **v0.2.0** 是首个与完整生命周期管理工作台对齐的正式版本。可从 [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0) 下载 `Skill-Atlas-Setup-0.2.0.exe`，安装后从开始菜单或可选的桌面快捷方式打开 **Skill Atlas**。安装包自带 Node.js 运行环境；如果 Release 附件仍在构建，可先使用下面的源码启动器。构建和发布方式见 [Windows 分发说明](docs/windows-distribution.md)。
 
-### 从源码启动
+### 每次从 GitHub README 启动（推荐源码方式）
 
-环境要求：Windows 10/11、Node.js 20 或更高版本（安装 Node.js 时会包含 npm）。
+环境要求：Windows 10/11、Git，以及 Node.js 20 或更高版本（安装 Node.js 时会包含 npm）。如果上一次启动 Skill Atlas 的终端仍在运行，请先在那个终端按 `Ctrl+C` 停止旧服务。
 
-先克隆项目并进入目录：
+以后每次打开本 README，只需根据当前终端复制并执行下面对应的**完整代码块**。它会在 `%USERPROFILE%\skill-atlas` 不存在时自动克隆；目录已经存在时则更新到远端 `main`，重新同步锁定依赖，最后启动网站。
 
-```text
-git clone https://github.com/NaCr05/skill-atlas.git
-cd skill-atlas
-```
-
-命令提示符（CMD）运行：
+命令提示符（CMD）：
 
 ```bat
+cd /d "%USERPROFILE%"
+if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 start-skill-atlas.cmd
 ```
 
-PowerShell 运行：
+PowerShell：
 
 ```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
+  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+}
+Set-Location $skillAtlasRepo
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-启动器会自动检查项目目录、Node.js、npm、项目依赖和本地端口。如果首次启动缺少依赖，请复制它显示的修复命令（`npm ci` 或 `npm.cmd ci`）执行一次，再重新启动。服务就绪后会自动选择可用端口并打开浏览器。
+如果任意 `git` 或 `npm` 命令报错，请停在该行处理，不要继续启动旧代码。`git pull --ff-only` 不会覆盖本地提交。启动器会自动选择可用端口，并通过专用身份接口确认响应方确实是 Skill Atlas；只有终端显示 `Browser opened:` 后才使用它打开的地址，不要手动输入固定的 `127.0.0.1:3000`。
 
 然后：
 

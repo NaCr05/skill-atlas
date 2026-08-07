@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+test("publishes the launcher identity marker", async ({ request }) => {
+  const response = await request.get("/api/health");
+  expect(response.ok()).toBe(true);
+  expect(response.headers()["x-skill-atlas-app"]).toBe("skill-atlas");
+  await expect(response.json()).resolves.toEqual({ app: "skill-atlas", status: "ready" });
+});
+
 test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await page.goto("/skills");
   await expect(page).toHaveURL(/\/$/);
