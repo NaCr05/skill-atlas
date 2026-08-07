@@ -52,21 +52,67 @@ The Builder's compact **Capability imprint** summarizes source and author, struc
 
 ## Quick start
 
-### Windows installer (no command line)
+### Regular users: download the Windows installer
 
-Version **v0.2.0** is the first release aligned with the complete lifecycle-management workspace. Download `Skill-Atlas-Setup-0.2.0.exe` from the [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0), run it, then open **Skill Atlas** from the Start menu or its optional desktop shortcut. The installer bundles its own Node.js runtime. If the release asset is temporarily unavailable, use the source launcher below. See [Windows distribution](docs/windows-distribution.md) for build and release details.
+No Git, Node.js, or command line is required. Open the [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0), download and run `Skill-Atlas-Setup-0.2.0.exe`, then open **Skill Atlas** from the Start menu or the optional desktop shortcut. The installer bundles its own runtime. A newer installer can upgrade the app in place without removing personal Skills or `.skill-atlas` data. See [Windows distribution](docs/windows-distribution.md) for build and release details.
 
-### Repeatable launch from this GitHub README (recommended source workflow)
+### Developers: first installation from source
 
-Requirements: Windows 10/11, Git, and Node.js 20 or newer (npm is included). If a previous Skill Atlas terminal is still running, press `Ctrl+C` there before starting again.
-
-Whenever you return to this README, copy the **complete block** for your current terminal. It clones into `%USERPROFILE%\skill-atlas` when needed; otherwise it updates the existing checkout to remote `main`, restores the locked dependencies, and starts the site.
+Requirements: Windows 10/11, Git, and Node.js 20 or newer (npm is included with Node.js). Copy only the block for your current terminal; do not mix CMD and PowerShell syntax.
 
 Command Prompt (CMD):
 
 ```bat
 cd /d "%USERPROFILE%"
-if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+npm.cmd ci
+start-skill-atlas.cmd
+```
+
+PowerShell:
+
+```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+Set-Location $skillAtlasRepo
+npm.cmd ci
+.\start-skill-atlas.ps1
+```
+
+If `%USERPROFILE%\skill-atlas` already exists, do not clone it again. Use the launch or update section below instead.
+
+### How to launch quickly later
+
+- **Installer users:** open **Skill Atlas** from the Start menu or desktop shortcut.
+- **Source users:** enter the existing clone and run the launcher. Normal launches do not need another `git clone`, `git pull`, or `npm ci`.
+
+Command Prompt (CMD):
+
+```bat
+cd /d "%USERPROFILE%\skill-atlas"
+start-skill-atlas.cmd
+```
+
+PowerShell:
+
+```powershell
+Set-Location (Join-Path $HOME "skill-atlas")
+.\start-skill-atlas.ps1
+```
+
+Keep the terminal open while a source launch is running, and press `Ctrl+C` there to stop it. The launcher selects a free port and verifies the Skill Atlas identity endpoint. Use only the address opened after the terminal prints `Browser opened:`; never type a fixed `127.0.0.1:3000` address.
+
+After opening the app, select **Rescan**, describe a task or search for a Skill, review the invocation rules, then select **Copy invocation Prompt** and paste it into Codex. Frequent invocations can be saved as Prompt recipes, and ordered sets of Skills can be saved as workflows.
+
+### How to update to the latest version
+
+- **Installer users:** select **Check for updates** under **Environment → Desktop install & app updates**, or open the [latest Release](https://github.com/NaCr05/skill-atlas/releases/latest). Download and run the newer installer to upgrade in place.
+- **Source users:** press `Ctrl+C` in the old launcher terminal, then run the complete update block for your current shell.
+
+Command Prompt (CMD):
+
+```bat
 cd /d "%USERPROFILE%\skill-atlas"
 git fetch origin
 git switch main
@@ -78,11 +124,7 @@ start-skill-atlas.cmd
 PowerShell:
 
 ```powershell
-$skillAtlasRepo = Join-Path $HOME "skill-atlas"
-if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
-  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
-}
-Set-Location $skillAtlasRepo
+Set-Location (Join-Path $HOME "skill-atlas")
 git fetch origin
 git switch main
 git pull --ff-only origin main
@@ -90,17 +132,7 @@ npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-Stop if any `git` or `npm` command reports an error instead of continuing with stale code. `git pull --ff-only` will not overwrite local commits. The launcher selects a free port and verifies the Skill Atlas identity endpoint; use only the address opened after the terminal prints `Browser opened:` and do not type a fixed `127.0.0.1:3000` address.
-
-Then:
-
-1. Select **Rescan** to read the current local inventory.
-2. Describe a task or search for a Skill.
-3. Open a result, review its rules, and select **Copy invocation Prompt**.
-4. Save frequent invocations as Prompt recipes, or preserve an ordered set of Skills as a workflow.
-5. Paste the Prompt into Codex and add the details of your task.
-
-For terminal identification, missing-Node repair, PowerShell execution policy, manual startup, diagnostics, and production mode, see the [complete quick-start guide](docs/quick-start.md).
+Stop at any failed Git or npm step instead of launching stale code. `git pull --ff-only` will not overwrite local commits. For terminal identification, missing-Node repair, PowerShell execution policy, manual startup, and diagnostics, see the [complete quick-start guide](docs/quick-start.md).
 
 ## What it scans
 

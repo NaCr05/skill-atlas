@@ -2,9 +2,21 @@
 
 [简体中文](#中文快速启动)
 
-This guide takes Skill Atlas from a fresh clone to the first copied Codex invocation Prompt. It explicitly covers both PowerShell and Command Prompt (CMD).
+This guide separates installation, normal startup, and updates so you only run the commands required for the current task. Choose the installer path unless you plan to develop Skill Atlas itself.
 
-## 1. Check the prerequisites
+## 1. Regular users: download the Windows installer
+
+This path needs neither Git, Node.js, nor a command line.
+
+1. Open the [latest GitHub Release](https://github.com/NaCr05/skill-atlas/releases/latest).
+2. Download and run the `Skill-Atlas-Setup-<version>.exe` attachment.
+3. Open **Skill Atlas** from the Start menu or the optional desktop shortcut.
+
+The installer bundles its own runtime. Windows may show a publisher warning for an unsigned community build; verify that the download came from this repository before continuing. Installing a newer package upgrades the application in place without removing personal Skills or `.skill-atlas` data.
+
+## 2. Developers: first installation from source
+
+Requirements:
 
 - Windows 10 or Windows 11
 - Git
@@ -12,30 +24,96 @@ This guide takes Skill Atlas from a fresh clone to the first copied Codex invoca
 - npm, included with Node.js
 - Codex with one or more installed Skills for the intended experience
 
-The following version checks work in both PowerShell and CMD:
+These checks work in both PowerShell and CMD:
 
 ```text
+git --version
 node --version
 npm --version
 ```
 
-### Identify your terminal
+Identify the terminal before copying commands:
 
 - **Command Prompt (CMD):** the window may be titled “Command Prompt,” and the prompt usually looks like `C:\Users\name>`.
 - **PowerShell:** the window may be titled “PowerShell,” and the prompt usually starts with `PS`, such as `PS C:\Users\name>`.
 - **Windows Terminal:** this is the tabbed host application; each tab can run either CMD or PowerShell. Check the tab title and prompt.
 
-Use the complete block for your terminal below. Do not mix CMD and PowerShell syntax.
-
-## 2. Repeatable update and launch
-
-If an earlier Skill Atlas terminal is still running, press `Ctrl+C` there first. The following blocks are deliberately repeatable: they clone the repository only when it is absent, update an existing checkout to remote `main`, restore the exact locked dependencies, and start the verified local site.
+Use the complete block for your terminal. Do not mix CMD and PowerShell syntax.
 
 Command Prompt (CMD):
 
 ```bat
 cd /d "%USERPROFILE%"
-if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+npm.cmd ci
+start-skill-atlas.cmd
+```
+
+PowerShell:
+
+```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+Set-Location $skillAtlasRepo
+npm.cmd ci
+.\start-skill-atlas.ps1
+```
+
+If `%USERPROFILE%\skill-atlas` already exists, do not clone it again. Use the launch or update section below.
+
+## 3. How to launch quickly later
+
+Installer users can open **Skill Atlas** from the Start menu or desktop shortcut. Source users only need to enter the existing clone and run its launcher.
+
+Command Prompt (CMD):
+
+```bat
+cd /d "%USERPROFILE%\skill-atlas"
+start-skill-atlas.cmd
+```
+
+PowerShell:
+
+```powershell
+Set-Location (Join-Path $HOME "skill-atlas")
+.\start-skill-atlas.ps1
+```
+
+Keep the source-launch terminal open while using Skill Atlas, and press `Ctrl+C` there to stop it. The launcher scans ports 3000 through 3010 and polls `/api/health` for the Skill Atlas identity marker. It opens a browser only after that marker is present. Use only the URL shown after `Browser opened:`; never substitute a fixed port copied from another tab.
+
+### Launcher options and diagnostics
+
+Run the preflight without starting the site:
+
+```text
+start-skill-atlas.cmd --check
+```
+
+```powershell
+.\start-skill-atlas.ps1 --check
+```
+
+Append `--port 3200` to select a specific port, or `--no-browser` to suppress automatic browser opening.
+
+### Complete the first workflow
+
+1. Select **Rescan** to refresh the inventory from disk.
+2. Enter a task such as “Review the accessibility of my React dashboard.”
+3. Open a recommended Skill and check its purpose, rules, source, and readiness.
+4. Select **Copy invocation Prompt**.
+5. Paste the Prompt into Codex and replace the placeholders with your project details.
+
+You can favorite or pin useful Skills, add local notes, and switch between Chinese and English. Skill names remain unchanged in both languages. Open **Environment settings** for the read-only health check covering the source tree, runtime, dependencies, local service, Codex home, and personal Skills directory.
+
+## 4. How to update to the latest version
+
+- **Installer users:** select **Check for updates** under **Environment → Desktop install & app updates**, or open the [latest Release](https://github.com/NaCr05/skill-atlas/releases/latest). Download and run the newer installer.
+- **Source users:** first press `Ctrl+C` in any old launcher terminal, then run the complete update block for the current shell.
+
+Command Prompt (CMD):
+
+```bat
 cd /d "%USERPROFILE%\skill-atlas"
 git fetch origin
 git switch main
@@ -47,11 +125,7 @@ start-skill-atlas.cmd
 PowerShell:
 
 ```powershell
-$skillAtlasRepo = Join-Path $HOME "skill-atlas"
-if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
-  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
-}
-Set-Location $skillAtlasRepo
+Set-Location (Join-Path $HOME "skill-atlas")
 git fetch origin
 git switch main
 git pull --ff-only origin main
@@ -59,35 +133,7 @@ npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-Stop if any Git or npm step fails. The fast-forward-only pull refuses to overwrite local commits. Keep the final launcher terminal open while using Skill Atlas, and press `Ctrl+C` there to stop it.
-
-The launcher scans ports 3000 through 3010 and polls `/api/health` for the Skill Atlas identity marker. It opens a browser only after that marker is present. Use only the URL shown after `Browser opened:`; never substitute a fixed port copied from another tab.
-
-## 3. Launcher options and diagnostics
-
-The preflight can be run without starting the site:
-
-```text
-start-skill-atlas.cmd --check
-```
-
-```powershell
-.\start-skill-atlas.ps1 --check
-```
-
-To select a specific port, append `--port 3200`. Append `--no-browser` if you do not want the browser to open automatically.
-
-## 4. Complete the first workflow
-
-1. Select **Rescan** to refresh the inventory from disk.
-2. Enter a task such as “Review the accessibility of my React dashboard.”
-3. Open a recommended Skill and check its purpose, rules, source, and readiness.
-4. Select **Copy invocation Prompt**.
-5. Paste the Prompt into Codex and replace the placeholders with your project details.
-
-You can favorite or pin useful Skills, add local notes, and switch between Chinese and English. Skill names remain unchanged in both languages.
-
-Open **Environment settings** to see the read-only health check for the source tree, runtime, dependencies, active local service, Codex home, and personal Skills directory. Items that need action include commands for CMD and PowerShell.
+Stop if any Git or npm step fails instead of launching stale code. The fast-forward-only pull refuses to overwrite local commits.
 
 ## Manual fallback
 
@@ -234,9 +280,21 @@ Use the clear-data action in the interface. Favorites, pins, notes, recent copie
 
 [返回 English](#quick-start)
 
-本指南会带你从下载项目开始，一直完成第一次复制 Codex Skill 调用 Prompt，并明确区分 PowerShell 和命令提示符（CMD）。
+本指南把首次安装、日常启动和更新明确分开，让你只执行当前场景真正需要的步骤。除非你准备参与 Skill Atlas 开发，否则优先使用 Windows 安装包。
 
-## 1. 检查运行环境
+## 1. 普通用户：下载 Windows 安装包
+
+这条路径不需要 Git、Node.js 或命令行。
+
+1. 打开 [最新 GitHub Release](https://github.com/NaCr05/skill-atlas/releases/latest)。
+2. 下载并运行附件中的 `Skill-Atlas-Setup-<版本号>.exe`。
+3. 从开始菜单或安装时创建的桌面快捷方式打开 **Skill Atlas**。
+
+安装包自带运行环境。未签名的社区构建可能触发 Windows 发布者提醒，请先确认文件来自本仓库再继续。运行新版安装包可以覆盖升级，不会删除个人 Skills 或 `.skill-atlas` 数据。
+
+## 2. 开发者：首次从源码安装
+
+环境要求：
 
 - Windows 10 或 Windows 11
 - Git
@@ -244,34 +302,28 @@ Use the clear-data action in the interface. Favorites, pins, notes, recent copie
 - npm（安装 Node.js 时会一并提供）
 - 为了获得完整体验，Codex 中最好已经安装至少一个 Skill
 
-下面的版本检查命令可以同时用于 PowerShell 和 CMD：
+下面的检查命令可以同时用于 PowerShell 和 CMD：
 
 ```text
+git --version
 node --version
 npm --version
 ```
 
-### 判断当前使用的终端
+复制命令前请先辨认终端：
 
 - **命令提示符（CMD）：**窗口标题通常显示“命令提示符”，提示符一般类似 `C:\Users\用户名>`。
 - **PowerShell：**窗口标题通常显示“PowerShell”，提示符一般以 `PS` 开头，例如 `PS C:\Users\用户名>`。
 - **Windows Terminal：**它只是承载标签页的终端应用，每个标签页既可能运行 CMD，也可能运行 PowerShell，请查看标签标题和提示符。
 
-请完整复制下面与你当前终端对应的代码块，不要混用 CMD 和 PowerShell 语法。
-
-## 2. 可重复执行的更新与启动
-
-如果上一次启动 Skill Atlas 的终端仍在运行，请先在那个终端按 `Ctrl+C`。下面的代码块可以反复执行：项目不存在时才克隆，已经存在时更新到远端 `main`，按锁文件重新同步依赖，然后启动经过身份确认的本地网站。
+请完整复制与你当前终端对应的代码块，不要混用 CMD 和 PowerShell 语法。
 
 命令提示符（CMD）：
 
 ```bat
 cd /d "%USERPROFILE%"
-if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
 cd /d "%USERPROFILE%\skill-atlas"
-git fetch origin
-git switch main
-git pull --ff-only origin main
 npm.cmd ci
 start-skill-atlas.cmd
 ```
@@ -280,22 +332,35 @@ PowerShell：
 
 ```powershell
 $skillAtlasRepo = Join-Path $HOME "skill-atlas"
-if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
-  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
-}
+git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
 Set-Location $skillAtlasRepo
-git fetch origin
-git switch main
-git pull --ff-only origin main
 npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-任何 Git 或 npm 步骤报错时都应停下，不要继续启动旧代码；只允许快进的拉取不会覆盖本地提交。使用期间请保持最后的启动终端开启，需要停止时在其中按 `Ctrl+C`。
+如果 `%USERPROFILE%\skill-atlas` 已经存在，请不要再次克隆，直接使用下面的“快速启动”或“更新”步骤。
 
-启动器会检查 3000 到 3010，并通过 `/api/health` 校验 Skill Atlas 专属身份标识。只有确认成功才会打开浏览器；请只使用终端显示 `Browser opened:` 后自动打开的地址，不要从其他标签页复制固定端口。
+## 3. 以后如何快速启动
 
-## 3. 启动选项与环境体检
+安装包用户直接从开始菜单或桌面快捷方式打开 **Skill Atlas**。源码用户只需进入已经克隆的目录并运行启动器。
+
+命令提示符（CMD）：
+
+```bat
+cd /d "%USERPROFILE%\skill-atlas"
+start-skill-atlas.cmd
+```
+
+PowerShell：
+
+```powershell
+Set-Location (Join-Path $HOME "skill-atlas")
+.\start-skill-atlas.ps1
+```
+
+源码启动期间请保持终端开启，需要停止时在其中按 `Ctrl+C`。启动器会检查 3000 到 3010，并通过 `/api/health` 校验 Skill Atlas 专属身份标识。只有确认成功才会打开浏览器；请只使用终端显示 `Browser opened:` 后自动打开的地址，不要从其他标签页复制固定端口。
+
+### 启动选项与环境体检
 
 可以只体检、不启动网站：
 
@@ -309,7 +374,7 @@ start-skill-atlas.cmd --check
 
 需要指定端口时追加 `--port 3200`；不想自动打开浏览器时追加 `--no-browser`。
 
-## 4. 完成第一次使用
+### 完成第一次使用
 
 1. 点击**重新扫描**，从磁盘刷新 Skill 清单。
 2. 输入一个任务，例如“检查我的 React 控制面板是否符合无障碍要求”。
@@ -317,9 +382,36 @@ start-skill-atlas.cmd --check
 4. 点击**复制调用 Prompt**。
 5. 把 Prompt 粘贴到 Codex，并用你的项目实际信息替换占位内容。
 
-你还可以收藏或置顶常用 Skill、添加本地备注，并切换中文或英文。无论界面语言如何切换，Skill 名称都会保持原样。
+你还可以收藏或置顶常用 Skill、添加本地备注，并切换中文或英文。打开**环境设置**可以查看源码、运行时、依赖、当前本地服务、Codex 主目录和个人 Skills 目录的只读环境体检。
 
-打开**环境设置**可以查看只读的“环境体检”：源码、运行时、依赖、当前本地服务、Codex 主目录和个人 Skills 目录会分别标记为“可用”或“需配置”，并为问题项提供 CMD 与 PowerShell 修复命令。
+## 4. 如何更新到最新版本
+
+- **安装包用户：**在**环境设置 → 桌面安装与应用升级**中点击**手动检查更新**，或打开 [最新 Release](https://github.com/NaCr05/skill-atlas/releases/latest)，下载并运行新版安装包。
+- **源码用户：**先在旧的启动终端按 `Ctrl+C`，再执行与你当前终端对应的完整更新代码块。
+
+命令提示符（CMD）：
+
+```bat
+cd /d "%USERPROFILE%\skill-atlas"
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
+start-skill-atlas.cmd
+```
+
+PowerShell：
+
+```powershell
+Set-Location (Join-Path $HOME "skill-atlas")
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
+.\start-skill-atlas.ps1
+```
+
+任何 Git 或 npm 步骤报错时都应停下，不要继续启动旧代码；只允许快进的拉取不会覆盖本地提交。
 
 ## 手动启动备用方案
 
