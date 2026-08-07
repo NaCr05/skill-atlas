@@ -51,21 +51,67 @@ Builder 中的**能力印记**会把来源与作者、结构、环境、调用�
 
 ## 快速启动
 
-### Windows 安装包（无需命令行）
+### 普通用户：下载 Windows 安装包
 
-**v0.2.0** 是首个与完整生命周期管理工作台对齐的正式版本。可从 [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0) 下载 `Skill-Atlas-Setup-0.2.0.exe`，安装后从开始菜单或可选的桌面快捷方式打开 **Skill Atlas**。安装包自带 Node.js 运行环境；如果 Release 附件仍在构建，可先使用下面的源码启动器。构建和发布方式见 [Windows 分发说明](docs/windows-distribution.md)。
+不需要 Git、Node.js 或命令行。打开 [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0)，下载并运行 `Skill-Atlas-Setup-0.2.0.exe`，然后从开始菜单或安装时创建的桌面快捷方式打开 **Skill Atlas**。安装包自带运行环境；新版本可以直接覆盖安装，个人 Skills 和 `.skill-atlas` 数据不会被删除。构建和发布方式见 [Windows 分发说明](docs/windows-distribution.md)。
 
-### 每次从 GitHub README 启动（推荐源码方式）
+### 开发者：首次从源码安装
 
-环境要求：Windows 10/11、Git，以及 Node.js 20 或更高版本（安装 Node.js 时会包含 npm）。如果上一次启动 Skill Atlas 的终端仍在运行，请先在那个终端按 `Ctrl+C` 停止旧服务。
-
-以后每次打开本 README，只需根据当前终端复制并执行下面对应的**完整代码块**。它会在 `%USERPROFILE%\skill-atlas` 不存在时自动克隆；目录已经存在时则更新到远端 `main`，重新同步锁定依赖，最后启动网站。
+环境要求：Windows 10/11、Git，以及 Node.js 20 或更高版本（npm 会随 Node.js 一并安装）。请只复制与你当前终端对应的代码块，不要混用 CMD 和 PowerShell 语法。
 
 命令提示符（CMD）：
 
 ```bat
 cd /d "%USERPROFILE%"
-if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+npm.cmd ci
+start-skill-atlas.cmd
+```
+
+PowerShell：
+
+```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+Set-Location $skillAtlasRepo
+npm.cmd ci
+.\start-skill-atlas.ps1
+```
+
+如果 `%USERPROFILE%\skill-atlas` 已经存在，请不要再次克隆，直接使用下面的“快速启动”或“更新”步骤。
+
+### 以后如何快速启动
+
+- **安装包用户：**从开始菜单或桌面快捷方式打开 **Skill Atlas**。
+- **源码用户：**进入已经克隆的目录并运行启动器；日常启动不需要再次执行 `git clone`、`git pull` 或 `npm ci`。
+
+命令提示符（CMD）：
+
+```bat
+cd /d "%USERPROFILE%\skill-atlas"
+start-skill-atlas.cmd
+```
+
+PowerShell：
+
+```powershell
+Set-Location (Join-Path $HOME "skill-atlas")
+.\start-skill-atlas.ps1
+```
+
+源码启动时请保持终端开启；需要停止服务时在其中按 `Ctrl+C`。启动器会自动选择可用端口并验证 Skill Atlas 身份，只有看到 `Browser opened:` 后才使用它打开的地址，不要手动输入固定的 `127.0.0.1:3000`。
+
+打开后，点击**重新扫描**读取 Skill 清单，描述任务或搜索 Skill，确认调用规则后点击**复制调用 Prompt**，再把 Prompt 粘贴到 Codex。常用调用可以保存为 Prompt 配方，多个 Skill 可以按顺序保存为工作流。
+
+### 如何更新到最新版本
+
+- **安装包用户：**在**环境设置 → 桌面安装与应用升级**中点击**手动检查更新**，或打开 [最新 Release](https://github.com/NaCr05/skill-atlas/releases/latest)。下载新版安装包并覆盖安装即可。
+- **源码用户：**先在旧的启动终端按 `Ctrl+C`，再执行与你当前终端对应的完整更新代码块。
+
+命令提示符（CMD）：
+
+```bat
 cd /d "%USERPROFILE%\skill-atlas"
 git fetch origin
 git switch main
@@ -77,11 +123,7 @@ start-skill-atlas.cmd
 PowerShell：
 
 ```powershell
-$skillAtlasRepo = Join-Path $HOME "skill-atlas"
-if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
-  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
-}
-Set-Location $skillAtlasRepo
+Set-Location (Join-Path $HOME "skill-atlas")
 git fetch origin
 git switch main
 git pull --ff-only origin main
@@ -89,17 +131,7 @@ npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-如果任意 `git` 或 `npm` 命令报错，请停在该行处理，不要继续启动旧代码。`git pull --ff-only` 不会覆盖本地提交。启动器会自动选择可用端口，并通过专用身份接口确认响应方确实是 Skill Atlas；只有终端显示 `Browser opened:` 后才使用它打开的地址，不要手动输入固定的 `127.0.0.1:3000`。
-
-然后：
-
-1. 点击**重新扫描**，读取当前电脑上的 Skill 清单。
-2. 描述你要完成的任务，或直接搜索某个 Skill。
-3. 打开结果，确认调用规则，然后点击**复制调用 Prompt**。
-4. 常用调用可点击**保存为 Prompt 配方**；多个 Skill 可按顺序保存为工作流。
-5. 把 Prompt 粘贴到 Codex，再补充你的具体任务信息。
-
-如何辨认终端、修复 Node 缺失、处理 PowerShell 执行策略、手动启动、环境体检和生产模式，请查看[完整快速启动指南](docs/quick-start.md#中文快速启动)。
+如果任意 Git 或 npm 步骤报错，请停在该行处理，不要继续启动旧代码。`git pull --ff-only` 不会覆盖本地提交。如何辨认终端、修复 Node 缺失、处理 PowerShell 执行策略、手动启动和运行环境体检，请查看[完整快速启动指南](docs/quick-start.md#中文快速启动)。
 
 ## 会扫描哪些目录？
 
