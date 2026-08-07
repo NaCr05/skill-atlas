@@ -4,7 +4,9 @@ import {
   findAvailablePort,
   getBrowserLaunchCommand,
   inspectLaunchEnvironment,
+  isSkillAtlasResponse,
   parseLauncherArgs,
+  waitForServer,
 } from "../../scripts/startup/launcher.mjs";
 
 describe("Skill Atlas startup launcher", () => {
@@ -45,5 +47,32 @@ describe("Skill Atlas startup launcher", () => {
     const launch = getBrowserLaunchCommand("http://127.0.0.1:3001", "win32");
     expect(launch.command.toLowerCase()).toMatch(/cmd(?:\.exe)?$/);
     expect(launch.args).toEqual(["/d", "/s", "/c", "start", "", "http://127.0.0.1:3001"]);
+  });
+
+  it("does not treat an unrelated local webpage as Skill Atlas", async () => {
+    const unrelated = new Response("<html><title>ModelIO</title></html>", {
+      status: 200,
+      headers: { "Content-Type": "text/html" },
+    });
+    const skillAtlas = new Response("{}", {
+      status: 200,
+      headers: { "X-Skill-Atlas-App": "skill-atlas" },
+    });
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(unrelated)
+      .mockResolvedValueOnce(skillAtlas);
+
+    await expect(waitForServer("http://127.0.0.1:3001", {
+      fetcher,
+      timeoutMs: 1_000,
+      pollIntervalMs: 1,
+    })).resolves.toBe(true);
+
+    expect(isSkillAtlasResponse(unrelated)).toBe(false);
+    expect(isSkillAtlasResponse(skillAtlas)).toBe(true);
+    expect(fetcher).toHaveBeenCalledWith(
+      "http://127.0.0.1:3001/api/health",
+      expect.any(Object),
+    );
   });
 });

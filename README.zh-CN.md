@@ -36,7 +36,8 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 | 管理来源策略 | 维护可信作者/仓库和许可证名单，并按来源锁定、可信度和归档状态筛选。 |
 | 管理私有存储 | 按路径和空间查看更新备份、停用 Skill 与重复归档，再恢复或审查后安全清理。 |
 | 管理完整生命周期 | 停用并重新启用个人 Skill、移入可恢复回收站、原位恢复，或在重新审查并输入完整名称后永久删除单条记录。 |
-| 迁移到其他电脑 | 导出并审查导入收藏、备注、历史、操作记录、来源注册表和非敏感设置；绝不导出 API Key。 |
+| 复用有效调用 | 保存“Skill + 任务 + 自定义要求”Prompt 配方，或保存 2–8 个 Skill 的有序工作流并生成组合 Prompt。 |
+| 迁移到其他电脑 | 导出并审查导入收藏、备注、配方、工作流、反馈汇总、历史、操作记录、来源注册表和非敏感设置；绝不导出 API Key。 |
 
 ## 目录优先工作流
 
@@ -46,43 +47,57 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 
 健康筛选采用三种面向行动的状态：**已就绪**表示可以生成并复制 Prompt；**需要审查**表示存在重复入口或元数据问题；**需要配置**表示缺少结构化依赖或外部环境条件。知识图谱仍可从左侧导航进入，但不再占用默认首页。
 
+Builder 中的**能力印记**会把来源与作者、结构、环境、调用方式、依赖、最近使用和当前推荐理由压缩在一张卡片中。填写任务与自定义要求后，可以保存为本地 Prompt 配方；复制后可选择“有帮助 / 没解决 / 选错 Skill”，推荐只使用这些本地汇总结果调整排序，不保存或上传对话正文。左侧的**配方与工作流**页面可直接复用配方，也能保存、排序和复制多 Skill 工作流。工作流第一阶段只生成组合 Prompt，绝不自动执行 Codex。
+
 ## 快速启动
 
 ### Windows 安装包（无需命令行）
 
 **v0.2.0** 是首个与完整生命周期管理工作台对齐的正式版本。可从 [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0) 下载 `Skill-Atlas-Setup-0.2.0.exe`，安装后从开始菜单或可选的桌面快捷方式打开 **Skill Atlas**。安装包自带 Node.js 运行环境；如果 Release 附件仍在构建，可先使用下面的源码启动器。构建和发布方式见 [Windows 分发说明](docs/windows-distribution.md)。
 
-### 从源码启动
+### 每次从 GitHub README 启动（推荐源码方式）
 
-环境要求：Windows 10/11、Node.js 20 或更高版本（安装 Node.js 时会包含 npm）。
+环境要求：Windows 10/11、Git，以及 Node.js 20 或更高版本（安装 Node.js 时会包含 npm）。如果上一次启动 Skill Atlas 的终端仍在运行，请先在那个终端按 `Ctrl+C` 停止旧服务。
 
-先克隆项目并进入目录：
+以后每次打开本 README，只需根据当前终端复制并执行下面对应的**完整代码块**。它会在 `%USERPROFILE%\skill-atlas` 不存在时自动克隆；目录已经存在时则更新到远端 `main`，重新同步锁定依赖，最后启动网站。
 
-```text
-git clone https://github.com/NaCr05/skill-atlas.git
-cd skill-atlas
-```
-
-命令提示符（CMD）运行：
+命令提示符（CMD）：
 
 ```bat
+cd /d "%USERPROFILE%"
+if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 start-skill-atlas.cmd
 ```
 
-PowerShell 运行：
+PowerShell：
 
 ```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
+  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+}
+Set-Location $skillAtlasRepo
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-启动器会自动检查项目目录、Node.js、npm、项目依赖和本地端口。如果首次启动缺少依赖，请复制它显示的修复命令（`npm ci` 或 `npm.cmd ci`）执行一次，再重新启动。服务就绪后会自动选择可用端口并打开浏览器。
+如果任意 `git` 或 `npm` 命令报错，请停在该行处理，不要继续启动旧代码。`git pull --ff-only` 不会覆盖本地提交。启动器会自动选择可用端口，并通过专用身份接口确认响应方确实是 Skill Atlas；只有终端显示 `Browser opened:` 后才使用它打开的地址，不要手动输入固定的 `127.0.0.1:3000`。
 
 然后：
 
 1. 点击**重新扫描**，读取当前电脑上的 Skill 清单。
 2. 描述你要完成的任务，或直接搜索某个 Skill。
 3. 打开结果，确认调用规则，然后点击**复制调用 Prompt**。
-4. 把 Prompt 粘贴到 Codex，再补充你的具体任务信息。
+4. 常用调用可点击**保存为 Prompt 配方**；多个 Skill 可按顺序保存为工作流。
+5. 把 Prompt 粘贴到 Codex，再补充你的具体任务信息。
 
 如何辨认终端、修复 Node 缺失、处理 PowerShell 执行策略、手动启动、环境体检和生产模式，请查看[完整快速启动指南](docs/quick-start.md#中文快速启动)。
 
@@ -140,7 +155,8 @@ Skill Atlas 以本地文件系统为事实来源，可以识别：
 - 个人可管理 Skill 可以移入 Codex 不会扫描的私有停用区，并在确认原位置未被占用后原位重新启用。
 - 独立回收站页面会展示原安装位置和当前存放位置，支持一键恢复；只有重新通过确定性检查并输入完整 Skill 名称后，才能永久删除单条记录。
 - 系统、插件、兼容目录和共享 Skill 始终只读；目前不提供自动、批量或定时清空回收站。
-- 收藏、备注、最近复制、任务/搜索历史快照和轻量使用指标只保存在浏览器本地。
+- 收藏、备注、Prompt 配方、工作流、最近复制、任务/搜索历史快照和轻量使用指标只保存在浏览器本地。
+- 复制后的效果反馈只记录 Skill 标识、结果计数和时间，不保存对话正文，也不会自动发送给 AI 服务。
 - 从历史恢复任务或市场结果不会自动再次调用 AI，也不会自动重复市场请求。
 - 市场候选会明确标记“未安装”，不能调用或加入组合；它与技能市场结果共用“先审查、再确认安装”的安全流程。
 - 验证安装成功后，可以直接查看新 Skill，或复制一段本地生成的调用 Prompt。

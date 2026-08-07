@@ -19,6 +19,10 @@ describe("Windows distribution assets", () => {
     expect(smoke).toContain("fresh-install");
     expect(smoke).toContain("upgrade-install");
     expect(smoke).toContain("rollback-install");
+    const desktopLauncher = await readFile(path.join(process.cwd(), "packaging/windows/desktop-launcher.mjs"), "utf8");
+    expect(desktopLauncher).toContain('identityHeader = "x-skill-atlas-app"');
+    expect(desktopLauncher).toContain('path: "/api/health"');
+    expect(desktopLauncher).toContain("response.headers[identityHeader] === identityValue");
   });
 
   it("creates an empty standalone public directory when a fresh checkout has no public assets", async () => {

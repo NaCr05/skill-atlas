@@ -13,5 +13,6 @@ export default async function Home({
 }) {
   const parameters = await searchParams;
   const focusedSkillName = firstValue(parameters.skill).trim().slice(0, 80);
-  return <CatalogPage focusedSkillName={focusedSkillName} />;
+  const recipeId = firstValue(parameters.recipe).trim().slice(0, 160);
+  return <CatalogPage focusedSkillName={focusedSkillName} recipeId={recipeId} />;
 }

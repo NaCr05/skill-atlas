@@ -1,4 +1,5 @@
 import type { Language } from "@/core/i18n";
+import type { SkillFeedbackSummary } from "@/core/personal-library";
 import { translatedSkillDescription, translatedTags, translatedUseCases } from "@/core/skill-translations";
 
 import { recommendSkills } from "./recommend";
@@ -66,11 +67,12 @@ export function catalogResultGroups(
   query: string,
   language: Language,
   recentSkillIds: string[] = [],
+  feedbackBySkill: Readonly<Record<string, SkillFeedbackSummary>> = {},
 ): CatalogResultGroup[] {
   const cleanQuery = query.trim();
   const exact = cleanQuery ? skills.filter((skill) => catalogTextMatches(skill, cleanQuery)).slice(0, 5) : [];
   const exactIds = new Set(exact.map((skill) => skill.id));
-  const recommendations = cleanQuery ? recommendSkills(skills, cleanQuery, language, 8) : [];
+  const recommendations = cleanQuery ? recommendSkills(skills, cleanQuery, language, 8, feedbackBySkill) : [];
   const setup = recommendations
     .filter(({ skill }) => catalogHealthBucket(skill) === "setup" && !exactIds.has(skill.id))
     .slice(0, 4);
@@ -113,7 +115,12 @@ export function catalogResultGroups(
   ].filter((group) => group.items.length > 0) as CatalogResultGroup[];
 }
 
-export function catalogQuerySkillIds(skills: SkillSummary[], query: string, language: Language): Set<string> {
+export function catalogQuerySkillIds(
+  skills: SkillSummary[],
+  query: string,
+  language: Language,
+  feedbackBySkill: Readonly<Record<string, SkillFeedbackSummary>> = {},
+): Set<string> {
   const cleanQuery = query.trim();
   if (!cleanQuery) return new Set(skills.map((skill) => skill.id));
   const normalizedNameQuery = cleanQuery.replace(/^\$/, "").toLocaleLowerCase();
@@ -124,6 +131,6 @@ export function catalogQuerySkillIds(skills: SkillSummary[], query: string, lang
   if (exactNameMatches.length) return new Set(exactNameMatches.map((skill) => skill.id));
   return new Set([
     ...skills.filter((skill) => catalogTextMatches(skill, cleanQuery)).map((skill) => skill.id),
-    ...recommendSkills(skills, cleanQuery, language, skills.length).map(({ skill }) => skill.id),
+    ...recommendSkills(skills, cleanQuery, language, skills.length, feedbackBySkill).map(({ skill }) => skill.id),
   ]);
 }

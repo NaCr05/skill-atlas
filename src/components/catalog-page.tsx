@@ -7,7 +7,7 @@ import { summarizeSkillInventory } from "@/core/skills/summary";
 import { DashboardClient } from "./dashboard-client";
 import { LocalizedText } from "./localized-text";
 
-export async function CatalogPage({ focusedSkillName = "" }: { focusedSkillName?: string }) {
+export async function CatalogPage({ focusedSkillName = "", recipeId = "" }: { focusedSkillName?: string; recipeId?: string }) {
   const inventory = summarizeSkillInventory(await discoverSkills());
 
   return (
@@ -24,7 +24,7 @@ export async function CatalogPage({ focusedSkillName = "" }: { focusedSkillName?
       </header>
 
       <section className="inventory-section workbench-inventory" id="inventory">
-        <DashboardClient inventory={inventory} initialFocusedSkillName={focusedSkillName} />
+        <DashboardClient inventory={inventory} initialFocusedSkillName={focusedSkillName} initialRecipeId={recipeId} />
       </section>
     </main>
   );

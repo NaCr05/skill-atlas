@@ -51,4 +51,18 @@ describe("task description recommendation", () => {
   it("returns no result for a task without high-confidence signals", () => {
     expect(recommendSkills(skills, "帮我处理一下这个事情", "zh")).toEqual([]);
   });
+
+  it("uses local outcome summaries to refine otherwise similar matches", () => {
+    const similar = [
+      skill("alpha", "frontend web interface design"),
+      skill("beta", "frontend web interface design"),
+    ];
+    const feedback = {
+      alpha: { helpful: 0, notSolved: 0, wrongSkill: 2 },
+      beta: { helpful: 3, notSolved: 0, wrongSkill: 0 },
+    };
+    const results = recommendSkills(similar, "frontend design", "en", 5, feedback);
+    expect(results[0]?.skill.name).toBe("beta");
+    expect(results[0]?.reasons).toContain("Helpful in past use");
+  });
 });

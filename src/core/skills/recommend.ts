@@ -1,4 +1,5 @@
 import type { Language } from "@/core/i18n";
+import { skillFeedbackScore, type SkillFeedbackSummary } from "@/core/personal-library";
 import { translatedSkillDescription, translatedTags, translatedUseCases } from "@/core/skill-translations";
 import type { SkillSummary } from "./types";
 
@@ -54,6 +55,7 @@ export function recommendSkills<TSkill extends SkillSummary>(
   task: string,
   language: Language,
   limit = 5,
+  feedbackBySkill: Readonly<Record<string, SkillFeedbackSummary>> = {},
 ): SkillRecommendation<TSkill>[] {
   const cleanTask = task.trim();
   if (!cleanTask) return [];
@@ -84,6 +86,12 @@ export function recommendSkills<TSkill extends SkillSummary>(
     if (skill.environmentStatus === "blocked") score -= 40;
     if (skill.environmentStatus === "needs-setup") score -= 10;
     if (skill.status === "duplicate") score -= 15;
+
+    if (score > 0) {
+      const feedbackScore = skillFeedbackScore(feedbackBySkill[skill.id]);
+      score += feedbackScore;
+      if (feedbackScore >= 4) reasons.push(language === "zh" ? "过去使用反馈有效" : "Helpful in past use");
+    }
 
     return { skill, score, reasons: [...new Set(reasons)].slice(0, 2) };
   })

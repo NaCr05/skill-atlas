@@ -36,7 +36,8 @@ As your Skill collection grows, remembering every Skill's purpose, trigger rules
 | Govern sources | Maintain trusted authors/repositories and license policy; filter by source lock, trust, and archived status. |
 | Manage private storage | Inspect update backups, disabled Skills, and duplicate archives by path and size, then restore or review a safe cleanup. |
 | Manage the full lifecycle | Disable and re-enable personal Skills, move them to a recoverable trash, restore them in place, or permanently delete one item after a fresh exact-name review. |
-| Move to another computer | Export and review-import preferences, notes, history, operations, source registry, and non-secret settings. API keys are excluded. |
+| Reuse effective invocations | Save a “Skill + task + custom requirements” Prompt recipe, or an ordered 2–8 Skill workflow that generates a combined Prompt. |
+| Move to another computer | Export and review-import preferences, notes, recipes, workflows, feedback summaries, history, operations, source registry, and non-secret settings. API keys are excluded. |
 | Ask for deeper guidance | Explicitly call AI for installed-Skill matching, market-candidate ranking, Skill composition, review explanation, update summaries, or personal usage suggestions. |
 
 ## Catalog-first workflow
@@ -47,43 +48,57 @@ On desktop, the workspace is organized as **filters → results → invocation B
 
 Health filters use three action-oriented buckets: **Ready** can generate and copy a Prompt, **Needs review** has an entry or metadata issue, and **Needs setup** is missing a structured dependency or environment condition. The knowledge graph remains available from navigation but no longer occupies the default route.
 
+The Builder's compact **Capability imprint** summarizes source and author, structure, environment, invocation mode, dependencies, recent use, and the active recommendation reason. After adding a task and custom requirements, you can save the result as a local Prompt recipe. Copying a Prompt unlocks **Helpful / Not solved / Wrong Skill** feedback; deterministic ranking uses only these local aggregates and never stores or uploads conversation text. The **Recipes & flows** workspace reuses recipes directly and lets you save, reorder, and copy multi-Skill workflows. This first workflow stage only generates a combined Prompt and never executes Codex automatically.
+
 ## Quick start
 
 ### Windows installer (no command line)
 
 Version **v0.2.0** is the first release aligned with the complete lifecycle-management workspace. Download `Skill-Atlas-Setup-0.2.0.exe` from the [v0.2.0 Release](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0), run it, then open **Skill Atlas** from the Start menu or its optional desktop shortcut. The installer bundles its own Node.js runtime. If the release asset is temporarily unavailable, use the source launcher below. See [Windows distribution](docs/windows-distribution.md) for build and release details.
 
-### Run from source
+### Repeatable launch from this GitHub README (recommended source workflow)
 
-Requirements: Windows 10/11 and Node.js 20 or newer (npm is included).
+Requirements: Windows 10/11, Git, and Node.js 20 or newer (npm is included). If a previous Skill Atlas terminal is still running, press `Ctrl+C` there before starting again.
 
-Clone the project, enter its directory, and use the launcher for your terminal.
-
-```text
-git clone https://github.com/NaCr05/skill-atlas.git
-cd skill-atlas
-```
+Whenever you return to this README, copy the **complete block** for your current terminal. It clones into `%USERPROFILE%\skill-atlas` when needed; otherwise it updates the existing checkout to remote `main`, restores the locked dependencies, and starts the site.
 
 Command Prompt (CMD):
 
 ```bat
+cd /d "%USERPROFILE%"
+if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 start-skill-atlas.cmd
 ```
 
 PowerShell:
 
 ```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
+  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+}
+Set-Location $skillAtlasRepo
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-The launcher checks the project directory, Node.js, npm, dependencies, and local port. If dependencies are missing, run the exact repair command it prints (`npm ci` or `npm.cmd ci`) and launch again. It automatically selects a free port and opens the browser when the server is ready.
+Stop if any `git` or `npm` command reports an error instead of continuing with stale code. `git pull --ff-only` will not overwrite local commits. The launcher selects a free port and verifies the Skill Atlas identity endpoint; use only the address opened after the terminal prints `Browser opened:` and do not type a fixed `127.0.0.1:3000` address.
 
 Then:
 
 1. Select **Rescan** to read the current local inventory.
 2. Describe a task or search for a Skill.
 3. Open a result, review its rules, and select **Copy invocation Prompt**.
-4. Paste the Prompt into Codex and add the details of your task.
+4. Save frequent invocations as Prompt recipes, or preserve an ordered set of Skills as a workflow.
+5. Paste the Prompt into Codex and add the details of your task.
 
 For terminal identification, missing-Node repair, PowerShell execution policy, manual startup, diagnostics, and production mode, see the [complete quick-start guide](docs/quick-start.md).
 
@@ -128,7 +143,8 @@ Settings saved in the page take precedence over environment variables; **Restore
 - Personal manageable Skills can be disabled into a private area outside Codex discovery and re-enabled at the original location after fingerprint and collision checks.
 - The dedicated Trash page shows the original and current storage paths, supports one-click restore, and allows per-Skill permanent deletion only after a fresh deterministic review and exact-name confirmation.
 - System, plugin, compatibility, and shared Skills remain read-only. Automatic, bulk, and scheduled trash cleanup are not available.
-- Favorites, notes, recent copies, task/search history snapshots, and lightweight usage metrics stay in browser-local storage.
+- Favorites, notes, Prompt recipes, workflows, recent copies, task/search history snapshots, and lightweight usage metrics stay in browser-local storage.
+- Post-copy effectiveness feedback stores only the Skill identifier, outcome counts, and timestamps; it never stores conversation text or sends feedback automatically to an AI provider.
 - Reopening a task or marketplace result from history never repeats an AI or marketplace request automatically.
 - The personal AI assistant sends Skill IDs and bounded usage aggregates only after a click; personal note bodies are never sent.
 - Market candidates are labeled **Not installed**, cannot be invoked or composed, and open the same deterministic review checkpoint as marketplace results. Installation still requires a separate human confirmation.

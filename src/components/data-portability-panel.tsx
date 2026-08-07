@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 
 import { normalizeDiscoveryHistory, readDiscoveryHistory, writeDiscoveryHistory } from "@/core/discovery-history";
 import type { ServerImportReview } from "@/core/data-portability";
-import { normalizeLocalWorkspace, readLocalWorkspace, writeLocalWorkspace } from "@/core/local-workspace";
+import { mergeLocalWorkspaces, normalizeLocalWorkspace, readLocalWorkspace, writeLocalWorkspace } from "@/core/local-workspace";
 import { AccessibleDialog } from "./accessible-dialog";
 import { useLanguage } from "./language-provider";
 
@@ -66,7 +66,7 @@ export function DataPortabilityPanel() {
       if (!response.ok) throw new Error(payload.error || t("导入失败。", "Import failed."));
       if (file.browser?.workspace) {
         const current = readLocalWorkspace(); const imported = normalizeLocalWorkspace(file.browser.workspace);
-        writeLocalWorkspace(normalizeLocalWorkspace({ ...current, favorites: [...current.favorites, ...imported.favorites], pinned: [...current.pinned, ...imported.pinned], notes: { ...current.notes, ...imported.notes }, recentCopies: [...imported.recentCopies, ...current.recentCopies], analytics: { zeroResultSearches: [...imported.analytics.zeroResultSearches, ...current.analytics.zeroResultSearches], copyJourneys: [...imported.analytics.copyJourneys, ...current.analytics.copyJourneys] } }));
+        writeLocalWorkspace(mergeLocalWorkspaces(current, imported));
       }
       if (file.browser?.discoveryHistory) writeDiscoveryHistory(normalizeDiscoveryHistory(file.browser.discoveryHistory));
       setReview(undefined); setFile(undefined);
@@ -76,7 +76,7 @@ export function DataPortabilityPanel() {
   }
 
   return <section className="data-portability-panel">
-    <header><div><span className="eyebrow">{t("迁移与备份", "MIGRATION & BACKUP")}</span><h2><FileJson size={20} /> {t("本地数据导入导出", "Local data import & export")}</h2><p>{t("备份收藏、置顶、个人备注、搜索历史、操作记录、来源注册表和非敏感配置。API Key 永远不会导出。", "Back up favorites, pins, notes, search history, operations, source registry, and non-secret configuration. API keys are never exported.")}</p></div></header>
+    <header><div><span className="eyebrow">{t("迁移与备份", "MIGRATION & BACKUP")}</span><h2><FileJson size={20} /> {t("本地数据导入导出", "Local data import & export")}</h2><p>{t("备份收藏、置顶、个人备注、Prompt 配方、工作流、反馈汇总、搜索历史、操作记录、来源注册表和非敏感配置。API Key 永远不会导出。", "Back up favorites, pins, notes, Prompt recipes, workflows, feedback summaries, search history, operations, source registry, and non-secret configuration. API keys are never exported.")}</p></div></header>
     <div className="data-portability-actions"><button className="button button-primary" type="button" disabled={busy} onClick={() => void exportData()}><Download size={16} />{t("导出 JSON 备份", "Export JSON backup")}</button><button className="button button-quiet" type="button" disabled={busy} onClick={() => picker.current?.click()}><Upload size={16} />{t("选择备份并导入", "Choose backup to import")}</button><input ref={picker} hidden type="file" accept="application/json,.json" onChange={(event) => void choose(event.target.files?.[0])} /></div>
     <p className="privacy-note"><ShieldCheck size={15} />{t("导入采用合并策略；执行前会在私有目录保存当前服务端数据快照。", "Imports merge rather than replace. A private server-data snapshot is saved before changes are applied.")}</p>
     {message && <p className={message.kind === "error" ? "inline-error" : "inline-notice"}>{message.text}</p>}

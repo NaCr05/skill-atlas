@@ -7,6 +7,7 @@ This guide takes Skill Atlas from a fresh clone to the first copied Codex invoca
 ## 1. Check the prerequisites
 
 - Windows 10 or Windows 11
+- Git
 - Node.js 20 or newer
 - npm, included with Node.js
 - Codex with one or more installed Skills for the intended experience
@@ -24,47 +25,47 @@ npm --version
 - **PowerShell:** the window may be titled “PowerShell,” and the prompt usually starts with `PS`, such as `PS C:\Users\name>`.
 - **Windows Terminal:** this is the tabbed host application; each tab can run either CMD or PowerShell. Check the tab title and prompt.
 
-The basic startup commands below intentionally work in both shells.
+Use the complete block for your terminal below. Do not mix CMD and PowerShell syntax.
 
-## 2. Download Skill Atlas
+## 2. Repeatable update and launch
 
-Run these commands in either PowerShell or CMD:
-
-```text
-git clone https://github.com/NaCr05/skill-atlas.git
-cd skill-atlas
-```
-
-Confirm that the prompt now ends in `skill-atlas`, for example:
-
-```text
-C:\Users\name\skill-atlas>
-```
-
-## 3. Start with the launcher
+If an earlier Skill Atlas terminal is still running, press `Ctrl+C` there first. The following blocks are deliberately repeatable: they clone the repository only when it is absent, update an existing checkout to remote `main`, restore the exact locked dependencies, and start the verified local site.
 
 Command Prompt (CMD):
 
 ```bat
+cd /d "%USERPROFILE%"
+if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 start-skill-atlas.cmd
 ```
 
 PowerShell:
 
 ```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
+  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+}
+Set-Location $skillAtlasRepo
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-The launcher checks that it is in the right project, verifies Node.js 20+, npm, and installed dependencies, then finds an available port from 3000 through 3010. It opens the browser only after the local server responds. Keep the terminal open while using the app and press `Ctrl+C` to stop it.
+Stop if any Git or npm step fails. The fast-forward-only pull refuses to overwrite local commits. Keep the final launcher terminal open while using Skill Atlas, and press `Ctrl+C` there to stop it.
 
-On a fresh clone, the dependency check will normally print this repair command and stop:
+The launcher scans ports 3000 through 3010 and polls `/api/health` for the Skill Atlas identity marker. It opens a browser only after that marker is present. Use only the URL shown after `Browser opened:`; never substitute a fixed port copied from another tab.
 
-```text
-CMD> npm ci
-PowerShell> npm.cmd ci
-```
+## 3. Launcher options and diagnostics
 
-Run the command for your shell once, then run the launcher again. The preflight can also be run without starting the site:
+The preflight can be run without starting the site:
 
 ```text
 start-skill-atlas.cmd --check
@@ -97,7 +98,7 @@ npm ci
 npm run dev
 ```
 
-Then open the address printed by Next.js, normally [http://127.0.0.1:3000](http://127.0.0.1:3000).
+Then open the exact `Local` address printed by Next.js. Do not use a fixed port: if another local app owns port 3000, Next.js may print a different address.
 
 ## Custom Codex location
 
@@ -217,7 +218,7 @@ Confirm that the Skill folders contain `SKILL.md` files under `%USERPROFILE%\.co
 
 ### Port 3000 is already in use
 
-The launcher automatically checks 3001 through 3010, selects the first available port, and opens the matching address. For manual startup, use `npm run dev -- -p 3001`.
+The launcher automatically checks 3001 through 3010, selects the first available port, verifies the Skill Atlas identity response, and opens the matching address. Ignore any existing page on port 3000 when it belongs to another app. For manual startup, use `npm run dev -- -p 3001` and open the exact `Local` address printed by Next.js.
 
 ### Marketplace or AI enhancement is unavailable
 
@@ -238,6 +239,7 @@ Use the clear-data action in the interface. Favorites, pins, notes, recent copie
 ## 1. 检查运行环境
 
 - Windows 10 或 Windows 11
+- Git
 - Node.js 20 或更高版本
 - npm（安装 Node.js 时会一并提供）
 - 为了获得完整体验，Codex 中最好已经安装至少一个 Skill
@@ -255,47 +257,47 @@ npm --version
 - **PowerShell：**窗口标题通常显示“PowerShell”，提示符一般以 `PS` 开头，例如 `PS C:\Users\用户名>`。
 - **Windows Terminal：**它只是承载标签页的终端应用，每个标签页既可能运行 CMD，也可能运行 PowerShell，请查看标签标题和提示符。
 
-下面的基础启动命令经过有意选择，可以同时用于这两种终端。
+请完整复制下面与你当前终端对应的代码块，不要混用 CMD 和 PowerShell 语法。
 
-## 2. 下载 Skill Atlas
+## 2. 可重复执行的更新与启动
 
-在 PowerShell 或 CMD 中运行：
-
-```text
-git clone https://github.com/NaCr05/skill-atlas.git
-cd skill-atlas
-```
-
-请确认提示符已经进入 `skill-atlas` 目录，例如：
-
-```text
-C:\Users\用户名\skill-atlas>
-```
-
-## 3. 使用启动器
+如果上一次启动 Skill Atlas 的终端仍在运行，请先在那个终端按 `Ctrl+C`。下面的代码块可以反复执行：项目不存在时才克隆，已经存在时更新到远端 `main`，按锁文件重新同步依赖，然后启动经过身份确认的本地网站。
 
 命令提示符（CMD）：
 
 ```bat
+cd /d "%USERPROFILE%"
+if not exist "%USERPROFILE%\skill-atlas\.git" git clone https://github.com/NaCr05/skill-atlas.git "%USERPROFILE%\skill-atlas"
+cd /d "%USERPROFILE%\skill-atlas"
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 start-skill-atlas.cmd
 ```
 
 PowerShell：
 
 ```powershell
+$skillAtlasRepo = Join-Path $HOME "skill-atlas"
+if (-not (Test-Path (Join-Path $skillAtlasRepo ".git"))) {
+  git clone https://github.com/NaCr05/skill-atlas.git $skillAtlasRepo
+}
+Set-Location $skillAtlasRepo
+git fetch origin
+git switch main
+git pull --ff-only origin main
+npm.cmd ci
 .\start-skill-atlas.ps1
 ```
 
-启动器会确认项目目录，检查 Node.js 20+、npm 和依赖，并在 3000 到 3010 中寻找可用端口。只有本地服务真正响应后，它才会自动打开浏览器。使用期间请保持终端窗口开启；需要停止时按 `Ctrl+C`。
+任何 Git 或 npm 步骤报错时都应停下，不要继续启动旧代码；只允许快进的拉取不会覆盖本地提交。使用期间请保持最后的启动终端开启，需要停止时在其中按 `Ctrl+C`。
 
-刚克隆的项目通常还没有依赖，启动器会显示下面的修复命令并停止：
+启动器会检查 3000 到 3010，并通过 `/api/health` 校验 Skill Atlas 专属身份标识。只有确认成功才会打开浏览器；请只使用终端显示 `Browser opened:` 后自动打开的地址，不要从其他标签页复制固定端口。
 
-```text
-CMD> npm ci
-PowerShell> npm.cmd ci
-```
+## 3. 启动选项与环境体检
 
-按当前终端复制执行一次，再重新运行启动器。也可以只体检、不启动网站：
+可以只体检、不启动网站：
 
 ```text
 start-skill-atlas.cmd --check
@@ -328,7 +330,7 @@ npm ci
 npm run dev
 ```
 
-然后打开 Next.js 输出的地址，通常是 [http://127.0.0.1:3000](http://127.0.0.1:3000)。
+然后打开 Next.js 输出的准确 `Local` 地址。不要固定使用某个端口：如果 3000 已被其他本地应用占用，Next.js 会显示其他地址。
 
 ## 自定义 Codex 目录
 
@@ -448,7 +450,7 @@ winget install OpenJS.NodeJS.LTS
 
 ### 3000 端口已被占用
 
-启动器会自动继续检查 3001 到 3010，选择第一个可用端口并打开正确地址。手动启动时可以使用 `npm run dev -- -p 3001`。
+启动器会自动继续检查 3001 到 3010，选择第一个可用端口，确认响应方确实是 Skill Atlas，再打开正确地址。如果 3000 上已有其他应用，请忽略那个旧页面。手动启动时可以使用 `npm run dev -- -p 3001`，并打开 Next.js 打印的准确 `Local` 地址。
 
 ### Skill 市场或 AI 增强不可用
 

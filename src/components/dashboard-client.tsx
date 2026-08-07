@@ -24,9 +24,11 @@ type ViewMode = "cards" | "compact";
 export function DashboardClient({
   inventory: initialInventory,
   initialFocusedSkillName = "",
+  initialRecipeId = "",
 }: {
   inventory: SkillInventorySummary;
   initialFocusedSkillName?: string;
+  initialRecipeId?: string;
 }) {
   const { language, t } = useLanguage();
   const initialFocusedSkill = initialInventory.skills.find((skill) => skill.name === initialFocusedSkillName);
@@ -42,9 +44,18 @@ export function DashboardClient({
   const [rescanError, setRescanError] = useState("");
   const [updateRecords, setUpdateRecords] = useState<BatchUpdateRecord[]>([]);
   const [selectedJourneyStartedAt, setSelectedJourneyStartedAt] = useState(() => Date.now());
-  const [builderOpen, setBuilderOpen] = useState(false);
+  const [builderOpen, setBuilderOpen] = useState(Boolean(initialFocusedSkill));
   const searchRef = useRef<HTMLInputElement>(null);
-  const { workspace, toggleFavorite, togglePinned, saveNote, clearWorkspace } = useLocalWorkspace();
+  const {
+    workspace,
+    toggleFavorite,
+    togglePinned,
+    saveNote,
+    clearWorkspace,
+    savePromptRecipe,
+    saveSkillWorkflow,
+    recordSkillFeedback,
+  } = useLocalWorkspace();
 
   useEffect(() => {
     function focusSearch(event: KeyboardEvent) {
@@ -68,7 +79,7 @@ export function DashboardClient({
   }, [language]);
 
   const filtered = useMemo(() => {
-    const querySkillIds = catalogQuerySkillIds(inventory.skills, query, language);
+    const querySkillIds = catalogQuerySkillIds(inventory.skills, query, language, workspace.personalLibrary.feedback);
     const recentRank = new Map(workspace.recentCopies.map((item, index) => [item.skillId, index]));
     return inventory.skills.filter((skill) => {
       const matchesQuery = querySkillIds.has(skill.id);
@@ -92,10 +103,11 @@ export function DashboardClient({
       const pinDifference = Number(workspace.pinned.includes(right.id)) - Number(workspace.pinned.includes(left.id));
       return pinDifference || left.displayName.localeCompare(right.displayName, language === "zh" ? "zh-CN" : "en-US");
     });
-  }, [collection, inventory.skills, language, query, source, status, updateRecords, workspace.favorites, workspace.pinned, workspace.recentCopies]);
+  }, [collection, inventory.skills, language, query, source, status, updateRecords, workspace.favorites, workspace.personalLibrary.feedback, workspace.pinned, workspace.recentCopies]);
 
   const catalogPage = useMemo(() => paginateCatalog(filtered, page), [filtered, page]);
   const selectedSkill = selectedId ? inventory.skills.find((skill) => skill.id === selectedId) ?? null : null;
+  const selectedRecipe = initialRecipeId ? workspace.personalLibrary.recipes.find((recipe) => recipe.id === initialRecipeId) : undefined;
   const hasFilters = Boolean(query) || status !== "all" || source !== "all" || collection !== "all";
 
   function selectSkill(skill: SkillSummary) {
@@ -176,6 +188,7 @@ export function DashboardClient({
         searchInputRef={searchRef}
         onSelect={selectRecommendation}
         onClear={clearWorkspace}
+        onSaveWorkflow={saveSkillWorkflow}
       />
 
       <section className="catalog-workspace" data-view={view} data-builder={selectedSkill ? "open" : "closed"} aria-label={t("技能目录工作区", "Skill catalog workspace")}>
@@ -281,7 +294,7 @@ export function DashboardClient({
             onClose={() => setBuilderOpen(false)}
           >
             <InvocationBuilder
-              key={selectedSkill.id}
+              key={`${selectedSkill.id}:${selectedRecipe?.id || "fresh"}`}
               skill={selectedSkill}
               initialTask={builderTask}
               journeyStartedAt={selectedJourneyStartedAt}
@@ -289,6 +302,10 @@ export function DashboardClient({
               pinned={workspace.pinned.includes(selectedSkill.id)}
               onToggleFavorite={toggleFavorite}
               onTogglePinned={togglePinned}
+              workspace={workspace}
+              onSaveRecipe={savePromptRecipe}
+              onFeedback={recordSkillFeedback}
+              initialRecipe={selectedRecipe}
             />
           </ResponsiveBuilderShell>
         )}

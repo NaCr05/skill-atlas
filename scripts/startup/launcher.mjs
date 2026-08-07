@@ -8,6 +8,9 @@ import { fileURLToPath } from "node:url";
 export const DEFAULT_HOST = "127.0.0.1";
 export const DEFAULT_PORT = 3000;
 export const MINIMUM_NODE_MAJOR = 20;
+export const SKILL_ATLAS_READY_PATH = "/api/health";
+export const SKILL_ATLAS_IDENTITY_HEADER = "x-skill-atlas-app";
+export const SKILL_ATLAS_IDENTITY_VALUE = "skill-atlas";
 
 const currentFile = fileURLToPath(import.meta.url);
 const defaultProjectDirectory = path.resolve(path.dirname(currentFile), "..", "..");
@@ -243,15 +246,23 @@ export function openBrowser(url, options = {}) {
   child.unref?.();
 }
 
+export function isSkillAtlasResponse(response) {
+  return Boolean(
+    response?.ok
+    && response.headers?.get?.(SKILL_ATLAS_IDENTITY_HEADER) === SKILL_ATLAS_IDENTITY_VALUE,
+  );
+}
+
 export async function waitForServer(url, options = {}) {
   const fetcher = options.fetcher || fetch;
   const timeoutMs = options.timeoutMs || 60_000;
   const pollIntervalMs = options.pollIntervalMs || 350;
+  const readinessUrl = new URL(SKILL_ATLAS_READY_PATH, `${url}/`).toString();
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs && !options.signal?.aborted) {
     try {
-      const response = await fetcher(url, { signal: AbortSignal.timeout(1_500) });
-      if (response) return true;
+      const response = await fetcher(readinessUrl, { signal: AbortSignal.timeout(1_500) });
+      if (isSkillAtlasResponse(response)) return true;
     } catch {
       // The development server is still starting.
     }
@@ -307,7 +318,7 @@ export async function runLauncher(args = process.argv.slice(2), options = {}) {
     timeoutMs: options.serverTimeoutMs,
   }).then((ready) => {
     if (!ready) {
-      console.warn("[INFO] 服务尚未就绪，浏览器未自动打开 / Server did not become ready; browser was not opened.");
+      console.warn("[INFO] 未确认 Skill Atlas 服务身份，浏览器未自动打开 / Skill Atlas identity was not confirmed; browser was not opened.");
       return;
     }
     if (cli.openBrowser) {

@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+test("publishes the launcher identity marker", async ({ request }) => {
+  const response = await request.get("/api/health");
+  expect(response.ok()).toBe(true);
+  expect(response.headers()["x-skill-atlas-app"]).toBe("skill-atlas");
+  await expect(response.json()).resolves.toEqual({ app: "skill-atlas", status: "ready" });
+});
+
 test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await page.goto("/skills");
   await expect(page).toHaveURL(/\/$/);
@@ -395,6 +402,54 @@ test("task recommendation and personal workspace remain local", async ({ page, c
   await page.locator(".catalog-personal-note").getByText(/个人备注/).click();
   await expect(page.locator(".catalog-personal-note").getByLabel("个人备注")).toHaveValue("发布前检查变更范围和版本号");
   await expect(page.locator(".catalog-filter-panel").getByRole("button", { name: /最近复制 1/ })).toBeVisible();
+});
+
+test("Prompt recipes, local feedback, and ordered workflows remain reusable without auto-execution", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://127.0.0.1:3178" });
+  await page.goto("/");
+  await page.locator(".compact-skill-row").filter({ hasText: "ready-skill" }).click();
+
+  const builder = page.locator(".invocation-builder");
+  await expect(builder.getByText("能力印记")).toBeVisible();
+  await builder.getByLabel("这次想让它做什么？").fill("整理发布检查清单");
+  await builder.getByLabel("自定义要求（可选）").fill("只输出 Markdown，不修改文件");
+  await builder.getByRole("button", { name: "保存为 Prompt 配方" }).click();
+  await builder.getByLabel("配方名称").fill("发布检查配方");
+  await builder.getByRole("button", { name: "保存", exact: true }).click();
+
+  await page.goto("/library");
+  const recipe = page.locator(".recipe-card", { hasText: "发布检查配方" });
+  await expect(recipe).toContainText("整理发布检查清单");
+  await recipe.getByRole("button", { name: "直接复制 Prompt" }).click();
+  await recipe.getByRole("button", { name: "有帮助" }).click();
+  const prompt = await page.evaluate(() => navigator.clipboard.readText());
+  expect(prompt).toContain("$ready-skill");
+  expect(prompt).toContain("只输出 Markdown，不修改文件");
+
+  const feedback = await page.evaluate(() => {
+    const localState = JSON.parse(localStorage.getItem("skill-atlas:workspace:v1") || "{}");
+    return localState.personalLibrary.feedback[localState.recentCopies[0].skillId];
+  });
+  expect(feedback).toMatchObject({ helpful: 1, wrongSkill: 0 });
+
+  await page.getByRole("button", { name: "新建工作流" }).click();
+  const editor = page.locator(".workflow-library-editor");
+  await editor.getByLabel("名称").fill("安全交付流程");
+  await editor.getByLabel("总任务").fill("完成一次本地交付审查");
+  const picker = editor.getByRole("combobox");
+  await picker.selectOption("ready-skill");
+  await editor.getByRole("button", { name: "加入" }).click();
+  await picker.selectOption("explicit-skill");
+  await editor.getByRole("button", { name: "加入" }).click();
+  await editor.getByRole("button", { name: "保存工作流" }).click();
+
+  const workflow = page.locator(".workflow-card", { hasText: "安全交付流程" });
+  await expect(workflow.locator("ol code").nth(0)).toHaveText("$ready-skill");
+  await expect(workflow.locator("ol code").nth(1)).toHaveText("$explicit-skill");
+  await workflow.getByRole("button", { name: "复制组合 Prompt" }).click();
+  const combinedPrompt = await page.evaluate(() => navigator.clipboard.readText());
+  expect(combinedPrompt.indexOf("1. $ready-skill")).toBeLessThan(combinedPrompt.indexOf("2. $explicit-skill"));
+  expect(combinedPrompt).toContain("没有自动执行任何 Skill");
 });
 
 test("task history restores an AI result after navigating away without calling AI again", async ({ page }) => {

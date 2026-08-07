@@ -9,6 +9,18 @@ import {
   updateLocalWorkspace,
   type LocalWorkspaceState,
 } from "@/core/local-workspace";
+import {
+  markPromptRecipeUsed as markRecipeUsed,
+  markSkillWorkflowUsed as markWorkflowUsed,
+  recordSkillFeedback as applySkillFeedback,
+  removePromptRecipe as removeRecipe,
+  removeSkillWorkflow as removeWorkflow,
+  savePromptRecipe as upsertRecipe,
+  saveSkillWorkflow as upsertWorkflow,
+  type PromptFeedbackOutcome,
+  type PromptRecipeInput,
+  type SkillWorkflowInput,
+} from "@/core/personal-library";
 
 export function useLocalWorkspace() {
   const [workspace, setWorkspace] = useState<LocalWorkspaceState>(emptyLocalWorkspace);
@@ -52,5 +64,53 @@ export function useLocalWorkspace() {
 
   const clearWorkspace = useCallback(() => commit(() => emptyLocalWorkspace()), [commit]);
 
-  return { workspace, toggleFavorite, togglePinned, saveNote, clearWorkspace };
+  const savePromptRecipe = useCallback((input: PromptRecipeInput) => commit((state) => ({
+    ...state,
+    personalLibrary: upsertRecipe(state.personalLibrary, input),
+  })), [commit]);
+
+  const deletePromptRecipe = useCallback((recipeId: string) => commit((state) => ({
+    ...state,
+    personalLibrary: removeRecipe(state.personalLibrary, recipeId),
+  })), [commit]);
+
+  const markPromptRecipeUsed = useCallback((recipeId: string) => commit((state) => ({
+    ...state,
+    personalLibrary: markRecipeUsed(state.personalLibrary, recipeId),
+  })), [commit]);
+
+  const saveSkillWorkflow = useCallback((input: SkillWorkflowInput) => commit((state) => ({
+    ...state,
+    personalLibrary: upsertWorkflow(state.personalLibrary, input),
+  })), [commit]);
+
+  const deleteSkillWorkflow = useCallback((workflowId: string) => commit((state) => ({
+    ...state,
+    personalLibrary: removeWorkflow(state.personalLibrary, workflowId),
+  })), [commit]);
+
+  const markSkillWorkflowUsed = useCallback((workflowId: string) => commit((state) => ({
+    ...state,
+    personalLibrary: markWorkflowUsed(state.personalLibrary, workflowId),
+  })), [commit]);
+
+  const recordSkillFeedback = useCallback((skillId: string, outcome: PromptFeedbackOutcome, copyAt: string) => commit((state) => ({
+    ...state,
+    personalLibrary: applySkillFeedback(state.personalLibrary, skillId, outcome, copyAt),
+  })), [commit]);
+
+  return {
+    workspace,
+    toggleFavorite,
+    togglePinned,
+    saveNote,
+    clearWorkspace,
+    savePromptRecipe,
+    deletePromptRecipe,
+    markPromptRecipeUsed,
+    saveSkillWorkflow,
+    deleteSkillWorkflow,
+    markSkillWorkflowUsed,
+    recordSkillFeedback,
+  };
 }

@@ -1,4 +1,10 @@
 import type { Language } from "./i18n";
+import {
+  emptyPersonalLibrary,
+  mergePersonalLibraries,
+  normalizePersonalLibrary,
+  type PersonalLibraryState,
+} from "./personal-library";
 
 export const LOCAL_WORKSPACE_KEY = "skill-atlas:workspace:v1";
 export const LOCAL_WORKSPACE_EVENT = "skill-atlas:workspace-changed";
@@ -39,6 +45,7 @@ export interface LocalWorkspaceState {
     zeroResultSearches: ZeroResultSearch[];
     copyJourneys: CopyJourney[];
   };
+  personalLibrary: PersonalLibraryState;
 }
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
@@ -51,6 +58,7 @@ export function emptyLocalWorkspace(): LocalWorkspaceState {
     notes: {},
     recentCopies: [],
     analytics: { zeroResultSearches: [], copyJourneys: [] },
+    personalLibrary: emptyPersonalLibrary(),
   };
 }
 
@@ -107,6 +115,7 @@ export function normalizeLocalWorkspace(value: unknown): LocalWorkspaceState {
     notes,
     recentCopies,
     analytics: { zeroResultSearches, copyJourneys },
+    personalLibrary: normalizePersonalLibrary(record.personalLibrary),
   };
 }
 
@@ -164,10 +173,10 @@ export function recordZeroResultSearch(
 }
 
 export function recordPromptCopy(
-  copy: Omit<RecentPromptCopy, "copiedAt" | "elapsedMs"> & { journeyStartedAt?: number },
+  copy: Omit<RecentPromptCopy, "copiedAt" | "elapsedMs"> & { journeyStartedAt?: number; copiedAt?: string },
   storage: StorageLike | undefined = defaultStorage(),
 ): LocalWorkspaceState {
-  const copiedAt = new Date().toISOString();
+  const copiedAt = validDate(copy.copiedAt) ? copy.copiedAt : new Date().toISOString();
   const elapsedMs = copy.journeyStartedAt
     ? Math.min(30 * 60_000, Math.max(0, Date.now() - copy.journeyStartedAt))
     : undefined;
@@ -192,4 +201,21 @@ export function medianCopyJourneyMs(state: LocalWorkspaceState): number | undefi
   if (!values.length) return undefined;
   const middle = Math.floor(values.length / 2);
   return values.length % 2 ? values[middle] : Math.round((values[middle - 1] + values[middle]) / 2);
+}
+
+export function mergeLocalWorkspaces(current: LocalWorkspaceState, imported: LocalWorkspaceState): LocalWorkspaceState {
+  const left = normalizeLocalWorkspace(current);
+  const right = normalizeLocalWorkspace(imported);
+  return normalizeLocalWorkspace({
+    ...left,
+    favorites: [...left.favorites, ...right.favorites],
+    pinned: [...left.pinned, ...right.pinned],
+    notes: { ...left.notes, ...right.notes },
+    recentCopies: [...right.recentCopies, ...left.recentCopies],
+    analytics: {
+      zeroResultSearches: [...right.analytics.zeroResultSearches, ...left.analytics.zeroResultSearches],
+      copyJourneys: [...right.analytics.copyJourneys, ...left.analytics.copyJourneys],
+    },
+    personalLibrary: mergePersonalLibraries(left.personalLibrary, right.personalLibrary),
+  });
 }

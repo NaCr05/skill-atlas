@@ -28,6 +28,7 @@ describe("local workspace", () => {
       notes: { "skill-a": "用于毕业论文" },
       recentCopies: [],
       analytics: { zeroResultSearches: [], copyJourneys: [] },
+      personalLibrary: { recipes: [], workflows: [], feedback: {} },
     }, storage);
     expect(storage.raw()).toContain("用于毕业论文");
     expect(readLocalWorkspace(storage)).toMatchObject({ favorites: ["skill-a"], pinned: ["skill-a"] });
