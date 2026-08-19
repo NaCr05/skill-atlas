@@ -172,10 +172,34 @@
   margin-bottom: 18px;
 }
 
+.catalog-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 6px 0 5px;
+}
+
 .catalog-header h1 {
-  margin-top: 6px;
+  margin: 0;
   font-size: clamp(2rem, 3.2vw, 2.5rem);
   letter-spacing: -0.03em;
+}
+
+.upgrade-validation-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 9px;
+  color: var(--green);
+  border: 1px solid rgb(94 213 174 / 45%);
+  border-radius: 999px;
+  background: rgb(94 213 174 / 9%);
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .catalog-header p {

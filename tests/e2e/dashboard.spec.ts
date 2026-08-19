@@ -4,13 +4,14 @@ test("publishes the launcher identity marker", async ({ request }) => {
   const response = await request.get("/api/health");
   expect(response.ok()).toBe(true);
   expect(response.headers()["x-skill-atlas-app"]).toBe("skill-atlas");
-  await expect(response.json()).resolves.toEqual({ app: "skill-atlas", status: "ready" });
+  await expect(response.json()).resolves.toEqual({ app: "skill-atlas", status: "ready", version: "0.2.1-poc.1" });
 });
 
 test("inventory, filtering, detail, and Prompt copy flow", async ({ page }) => {
   await page.goto("/skills");
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: /技能目录/ })).toBeVisible();
+  await expect(page.getByText("#107 升级验证版 · v0.2.1-poc.1", { exact: true })).toBeVisible();
   const viewSwitcher = page.locator(".view-switcher");
   await expect(viewSwitcher.getByRole("button").nth(0)).toHaveAccessibleName("紧凑视图");
   await expect(viewSwitcher.getByRole("button", { name: "紧凑视图" })).toHaveAttribute("data-active", "true");
