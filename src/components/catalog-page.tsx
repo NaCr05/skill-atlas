@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 
+import { UPGRADE_VALIDATION_LABEL } from "@/core/app-version";
 import { discoverSkills } from "@/core/skills/discover";
 import { summarizeSkillInventory } from "@/core/skills/summary";
 
@@ -15,10 +16,13 @@ export async function CatalogPage({ focusedSkillName = "", recipeId = "" }: { fo
       <header className="workbench-header catalog-header">
         <div>
           <span className="eyebrow"><LocalizedText zh="本地能力目录" en="LOCAL CAPABILITY CATALOG" /></span>
-          <h1><LocalizedText zh="技能目录" en="Skill Catalog" /></h1>
+          <div className="catalog-title-row">
+            <h1><LocalizedText zh="技能目录" en="Skill Catalog" /></h1>
+            <span className="upgrade-validation-badge">{UPGRADE_VALIDATION_LABEL}</span>
+          </div>
           <p><LocalizedText zh="查找可信的本地 Skill，确认调用条件，并生成可直接使用的提示词。" en="Find a trusted local Skill, confirm how it should be invoked, and generate a ready-to-use Prompt." /></p>
         </div>
-        <Link className="button button-primary" href="/marketplace">
+        <Link className="button button-primary" href="/marketplace" aria-label="安装新 Skill / Install a Skill" title="安装新 Skill / Install a Skill">
           <Plus size={17} aria-hidden="true" /> <LocalizedText zh="安装新 Skill" en="Install a Skill" />
         </Link>
       </header>

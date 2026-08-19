@@ -765,6 +765,26 @@
     font-size: clamp(1.55rem, 8vw, 2rem);
   }
 
+  html[lang="en"] .catalog-header h1 {
+    font-size: 1.45rem;
+    white-space: nowrap;
+  }
+
+  .catalog-title-row {
+    gap: 6px;
+    flex-wrap: nowrap;
+    margin: 0;
+  }
+
+  .upgrade-validation-badge {
+    flex: 0 0 132px;
+    min-height: 30px;
+    padding: 2px 5px;
+    font-size: 0.62rem;
+    text-align: center;
+    white-space: normal;
+  }
+
   .workbench-header .button {
     width: 100%;
   }
@@ -783,10 +803,16 @@
   }
 
   .catalog-header .button {
-    width: auto;
+    width: 36px;
     min-height: 36px;
-    padding: 0 10px;
-    font-size: 0.68rem;
+    padding: 0;
+    gap: 0;
+    font-size: 0.6rem;
+  }
+
+  .catalog-header .button .i18n-zh,
+  .catalog-header .button .i18n-en {
+    display: none;
   }
 
   .workbench-stats {
