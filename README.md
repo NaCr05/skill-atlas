@@ -20,25 +20,12 @@ As your Skill collection grows, remembering every Skill's purpose, trigger rules
 
 | Need | What Skill Atlas provides |
 | --- | --- |
-| Find the right Skill | Search by name, capability, tag, or describe a task in natural language; recent task and marketplace results survive navigation. |
-| Know whether it works | Separate structural validity, invocation policy, and environment readiness. |
-| Invoke it correctly | Generate an editable Prompt in the selected interface language. |
-| Build a personal workspace | Favorite, pin, annotate, and revisit recently copied Skills. |
-| Understand provenance | Inspect source folders, supporting files, dependencies, and related Skills. |
-| Read a consistent bilingual inventory | Keep Skill names unchanged while showing catalog-backed or deterministic local Chinese summaries, with original `SKILL.md` content always available for verification. |
-| Check for changes safely | Compare a personal Skill with its exact GitHub source, file by file, without replacing anything. |
-| Discover new Skills | Search SkillsMP and skills.sh from a task, exclude installed entries, and review a complete GitHub Skill tree before installation. |
-| Resolve inventory issues | Review duplicate migrations and missing dependencies individually; dependency installs trigger an automatic rescan with a resolved/remaining result. |
-| Track and apply upstream changes | Check every source-tracked personal Skill, select entries with updates, then review each fresh diff and update sequentially. |
-| Manage duplicate archives | See every compatibility-entry archive, restore it to its original location, or permanently purge it after a fresh exact-name review. |
-| Follow write operations | Receive live running/success/failure/interruption updates through the Operations Center, with related recovery links. |
-| Audit each mutation | Open a phase timeline for preflight, download, backup, replacement, verification, rollback, and completion. |
-| Govern sources | Maintain trusted authors/repositories and license policy; filter by source lock, trust, and archived status. |
-| Manage private storage | Inspect update backups, disabled Skills, and duplicate archives by path and size, then restore or review a safe cleanup. |
-| Manage the full lifecycle | Disable and re-enable personal Skills, move them to a recoverable trash, restore them in place, or permanently delete one item after a fresh exact-name review. |
-| Reuse effective invocations | Save a “Skill + task + custom requirements” Prompt recipe, or an ordered 2–8 Skill workflow that generates a combined Prompt. |
-| Move to another computer | Export and review-import preferences, notes, recipes, workflows, feedback summaries, history, operations, source registry, and non-secret settings. API keys are excluded. |
-| Ask for deeper guidance | Explicitly call AI for installed-Skill matching, market-candidate ranking, Skill composition, review explanation, update summaries, or personal usage suggestions. |
+| Discover and choose | Search installed Skills by name or task, explore marketplace candidates, and explicitly request AI-assisted ranking when local matching is not enough. |
+| Inspect before acting | Review original instructions, source files, dependencies, relationships, structural validity, invocation policy, and environment readiness. |
+| Invoke and reuse | Generate an editable bilingual Prompt, save effective recipes, and compose ordered 2–8 Skill workflows without automatic execution. |
+| Manage safely | Review diffs before installs or updates, resolve duplicates and missing dependencies, and disable, restore, archive, or remove personal Skills with recovery controls. |
+| Follow and recover | Track live operations, inspect phase-by-phase audit trails, and manage backups, disabled Skills, and duplicate archives. |
+| Keep local data private | Keep catalog data, notes, feedback summaries, and history local; exclude API keys from exports and make external or AI requests explicit. |
 
 ## Catalog-first workflow
 
@@ -49,6 +36,27 @@ On desktop, the workspace is organized as **filters → results → invocation B
 Health filters use three action-oriented buckets: **Ready** can generate and copy a Prompt, **Needs review** has an entry or metadata issue, and **Needs setup** is missing a structured dependency or environment condition. The knowledge graph remains available from navigation but no longer occupies the default route.
 
 The Builder's compact **Capability imprint** summarizes source and author, structure, environment, invocation mode, dependencies, recent use, and the active recommendation reason. After adding a task and custom requirements, you can save the result as a local Prompt recipe. Copying a Prompt unlocks **Helpful / Not solved / Wrong Skill** feedback; deterministic ranking uses only these local aggregates and never stores or uploads conversation text. The **Recipes & flows** workspace reuses recipes directly and lets you save, reorder, and copy multi-Skill workflows. This first workflow stage only generates a combined Prompt and never executes Codex automatically.
+
+## Product tour
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="artifacts/detail-desktop.png" alt="Skill detail view with readiness and invocation guidance"><br>
+      <sub><b>Inspect a Skill</b> — verify its source, readiness, dependencies, and invocation guidance.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="artifacts/marketplace-desktop.png" alt="Marketplace discovery and installation review"><br>
+      <sub><b>Discover safely</b> — compare marketplace candidates and review the complete Skill tree before installation.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="artifacts/dashboard-mobile.png" alt="Skill Atlas mobile catalog" width="320"><br>
+      <sub><b>Use it anywhere</b> — the catalog and invocation workflow adapt to phone-sized screens.</sub>
+    </td>
+  </tr>
+</table>
 
 ## Quick start
 

@@ -4,6 +4,10 @@ Notable changes to Skill Atlas will be documented in this file. The project foll
 
 ## [Unreleased]
 
+### Changed
+
+- Condensed the bilingual README feature matrix into six user journeys and added a gallery composed from the existing detail, marketplace, and mobile screenshots.
+
 ### Added
 
 - A browser-local Prompt recipe library for saving and directly reusing a Skill, task, custom requirements, and language without re-entering them.
