@@ -14,20 +14,57 @@ Skill Atlas is a Windows-first, local control panel for discovering, understandi
 
 ![Skill Atlas dashboard](artifacts/dashboard-desktop-en.png)
 
-## Why Skill Atlas?
+[Download the Windows installer](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0) · [Start from source](#quick-start) · [Architecture](docs/architecture.md) · [Contribute](CONTRIBUTING.md)
 
-As your Skill collection grows, remembering every Skill's purpose, trigger rules, dependencies, and source becomes difficult. Skill Atlas keeps those details visible and helps you move from “What should I use?” to a copyable Prompt without editing the installed Skill itself.
+## Try the core workflow
 
-| Need | What Skill Atlas provides |
-| --- | --- |
-| Discover and choose | Search installed Skills by name or task, explore marketplace candidates, and explicitly request AI-assisted ranking when local matching is not enough. |
-| Inspect before acting | Review original instructions, source files, dependencies, relationships, structural validity, invocation policy, and environment readiness. |
-| Invoke and reuse | Generate an editable bilingual Prompt, save effective recipes, and compose ordered 2–8 Skill workflows without automatic execution. |
-| Manage safely | Review diffs before installs or updates, resolve duplicates and missing dependencies, and disable, restore, archive, or remove personal Skills with recovery controls. |
-| Follow and recover | Track live operations, inspect phase-by-phase audit trails, and manage backups, disabled Skills, and duplicate archives. |
-| Keep local data private | Keep catalog data, notes, feedback summaries, and history local; exclude API keys from exports and make external or AI requests explicit. |
+1. **Find** an installed Skill by name or task.
+2. **Choose** a Skill and check its readiness and invocation rules.
+3. **Describe** your task and edit the locally generated Prompt.
+4. **Copy** the Prompt, paste it into Codex, and start the task there.
 
-## Catalog-first workflow
+This path needs no API key. AI enhancement and marketplace discovery each require an explicit click. **Ready** Skills can be copied; **Needs review** and **Needs setup** explain what must be resolved first.
+
+## Architecture at a glance
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="artifacts/diagrams/overview.en.dark.png">
+  <img src="artifacts/diagrams/overview.en.png" alt="Local files, browser, reviewed changes, and optional external services" width="100%">
+</picture>
+
+[View full-size SVG](artifacts/diagrams/overview.en.svg)
+
+The browser handles local matching and default Prompt generation. The local service reads installed files and applies reviewed changes. External services are optional; Skill Atlas hands off a Prompt for the user to run in Codex. See the [architecture and data boundaries](docs/architecture.md).
+
+<details>
+<summary><b>Key flow: from discovery to a copyable Prompt</b></summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="artifacts/diagrams/invocation.en.dark.png">
+  <img src="artifacts/diagrams/invocation.en.png" alt="Local discovery to a copyable Prompt, including optional AI and readiness blockers" width="100%">
+</picture>
+
+[View full-size SVG](artifacts/diagrams/invocation.en.svg)
+
+The default path stays local. Copying and AI enhancement both require a ready Skill. The optional AI branch validates the response and falls back to the base Prompt when necessary. Copying ends the Skill Atlas flow; it does not execute a Codex task. [Follow the flow in the source](docs/diagrams/README.md#source-evidence).
+
+</details>
+
+## Capabilities and evidence
+
+| Capability | Current behavior | Where to verify it |
+| --- | --- | --- |
+| Find and invoke | Local matching and bilingual Prompt generation work without a model key. | [Prompt tests](tests/unit/prompt.test.ts), [explicit AI actions](tests/e2e/ai-assist.spec.ts) |
+| Optional AI | Enhancement validates the trigger and language, keeps a local fallback, and never silently retries another provider. | [Prompt implementation](src/core/skills/prompt.ts), [failure cases](tests/unit/prompt.test.ts) |
+| Bounded catalog | At most 20 results render per page; 500/1,000-summary fixtures exercise local search and ranking. | [Scale benchmarks](tests/performance/catalog-scale.test.ts), [testing scope](docs/testing.md) |
+| Review and recover | Installation and lifecycle changes use their own review and confirmation boundaries. | [Security model](docs/security-model.md), [lifecycle guide](docs/skill-lifecycle.md) |
+| Reuse locally | Save recipes, compose ordered 2–8 Skill workflows, and record post-copy feedback locally. | [Personal library](src/core/personal-library.ts), [local feedback model](docs/architecture.md#local-feedback-loop) |
+| Windows verification | CI runs type, lint, unit/integration, build, and browser checks. | [CI workflow](.github/workflows/ci.yml), [current runs](https://github.com/NaCr05/skill-atlas/actions/workflows/ci.yml) |
+
+These links describe implemented behavior and verification scope; they do not measure model quality or a speedup.
+
+<details>
+<summary><b>Catalog layout, readiness, recipes, and feedback</b></summary>
 
 The home page is now the Skill catalog rather than a statistics dashboard. A single **Find a Skill** command accepts an exact name or a task description. Local matching is immediate; AI deep matching and marketplace discovery each require a separate explicit click before any external request is made.
 
@@ -37,7 +74,10 @@ Health filters use three action-oriented buckets: **Ready** can generate and cop
 
 The Builder's compact **Capability imprint** summarizes source and author, structure, environment, invocation mode, dependencies, recent use, and the active recommendation reason. After adding a task and custom requirements, you can save the result as a local Prompt recipe. Copying a Prompt unlocks **Helpful / Not solved / Wrong Skill** feedback; deterministic ranking uses only these local aggregates and never stores or uploads conversation text. The **Recipes & flows** workspace reuses recipes directly and lets you save, reorder, and copy multi-Skill workflows. This first workflow stage only generates a combined Prompt and never executes Codex automatically.
 
-## Product tour
+</details>
+
+<details>
+<summary><b>More product views: inspect, install, and use on smaller screens</b></summary>
 
 <table>
   <tr>
@@ -57,6 +97,8 @@ The Builder's compact **Capability imprint** summarizes source and author, struc
     </td>
   </tr>
 </table>
+
+</details>
 
 ## Quick start
 

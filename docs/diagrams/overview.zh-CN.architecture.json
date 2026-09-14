@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Skill Atlas · 本地技能工作台",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/NaCr05/skill-atlas",
+      "revision": "fc98b4263580077a87f1f633666f4bd78b3e678f"
+    },
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "本地文件"
+        },
+        "security": {
+          "label": "审阅与确认"
+        }
+      }
+    }
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [
+      44,
+      90
+    ],
+    "cols": 4,
+    "cellW": 198,
+    "cellH": 94,
+    "gapX": 108,
+    "gapY": 172
+  },
+  "components": [
+    {
+      "id": "skill_files",
+      "type": "database",
+      "label": "已安装 Skill 文件",
+      "sublabel": "SKILL.md 与配套资源",
+      "tag": "本机 · 事实来源",
+      "row": 0,
+      "col": 0,
+      "sources": [
+        {
+          "path": "src/core/skills/paths.ts",
+          "label": "个人 / 系统 / 插件目录"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "发现与解析",
+      "sublabel": "扫描、分类、摘要库存",
+      "tag": "本地 Next.js 服务",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "src/core/skills/discover.ts",
+          "line": 154,
+          "end_line": 169,
+          "label": "读取并解析 Skill"
+        },
+        {
+          "path": "src/components/catalog-page.tsx",
+          "line": 10,
+          "end_line": 12,
+          "label": "首屏提供摘要库存"
+        }
+      ]
+    },
+    {
+      "id": "workbench",
+      "type": "frontend",
+      "label": "目录与提示词工作台",
+      "sublabel": "查找 · 本地生成",
+      "tag": "浏览器",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "src/components/dashboard-client.tsx",
+          "line": 81,
+          "end_line": 109,
+          "label": "本地筛选与选择"
+        },
+        {
+          "path": "src/components/invocation-builder.tsx",
+          "line": 56,
+          "end_line": 60,
+          "label": "浏览器生成默认提示词"
+        }
+      ]
+    },
+    {
+      "id": "codex",
+      "type": "external",
+      "label": "Codex 中使用",
+      "sublabel": "用户粘贴后发起任务",
+      "tag": "Skill Atlas 之外",
+      "row": 0,
+      "col": 3,
+      "sources": [
+        {
+          "path": "src/components/invocation-builder.tsx",
+          "line": 84,
+          "end_line": 100,
+          "label": "复制到剪贴板"
+        }
+      ]
+    },
+    {
+      "id": "skill_sources",
+      "type": "external",
+      "label": "GitHub 与技能市场",
+      "sublabel": "SkillsMP · skills.sh",
+      "tag": "按需联网",
+      "row": 1,
+      "col": 0,
+      "sources": [
+        {
+          "path": "docs/architecture.md",
+          "label": "市场发现与安装模型"
+        }
+      ]
+    },
+    {
+      "id": "reviewed_changes",
+      "type": "security",
+      "label": "审阅与变更",
+      "sublabel": "安装、更新、移除与恢复",
+      "tag": "本地服务 · 确认后执行",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "docs/architecture.md",
+          "label": "审阅计划与生命周期模块"
+        }
+      ]
+    },
+    {
+      "id": "ai_gateway",
+      "type": "backend",
+      "label": "AI 增强入口",
+      "sublabel": "服务端凭据 · 校验与回退",
+      "tag": "可选 · 本地服务",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "src/app/api/prompt/route.ts",
+          "line": 18,
+          "end_line": 30,
+          "label": "显式增强请求"
+        }
+      ]
+    },
+    {
+      "id": "ai_provider",
+      "type": "cloud",
+      "label": "OpenAI / DeepSeek",
+      "sublabel": "接收受限的提示词上下文",
+      "tag": "外部模型服务",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "src/core/skills/prompt.ts",
+          "line": 17,
+          "end_line": 25,
+          "label": "外发上下文"
+        },
+        {
+          "path": "src/core/skills/prompt.ts",
+          "line": 153,
+          "end_line": 216,
+          "label": "增强与回退"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Skill Atlas · 本地应用",
+      "wraps": [
+        "inventory",
+        "workbench",
+        "reviewed_changes",
+        "ai_gateway"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "read_skill_files",
+      "from": "skill_files",
+      "to": "inventory",
+      "label": "读取文件",
+      "variant": "emphasis"
+    },
+    {
+      "id": "show_inventory",
+      "from": "inventory",
+      "to": "workbench",
+      "label": "摘要库存",
+      "variant": "emphasis"
+    },
+    {
+      "id": "manual_handoff",
+      "from": "workbench",
+      "to": "codex",
+      "label": "复制 / 粘贴",
+      "variant": "emphasis"
+    },
+    {
+      "id": "review_source",
+      "from": "skill_sources",
+      "to": "reviewed_changes",
+      "label": "候选与源码"
+    },
+    {
+      "id": "confirm_change",
+      "from": "workbench",
+      "to": "reviewed_changes",
+      "label": "审阅后确认",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "mutate_personal",
+      "from": "reviewed_changes",
+      "to": "skill_files",
+      "label": "个人目录变更",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "explicit_ai",
+      "from": "workbench",
+      "to": "ai_gateway",
+      "label": "点击 AI 增强",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        716,
+        164
+      ]
+    },
+    {
+      "id": "provider_request",
+      "from": "ai_gateway",
+      "to": "ai_provider",
+      "label": "HTTPS",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "默认路径在本地",
+      "items": [
+        "读取已安装文件，查找与生成 Prompt 无需模型 API。",
+        "浏览器 localStorage 保存偏好、笔记与使用记录。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "外部服务按需使用",
+      "items": [
+        "市场查询与 AI 增强由用户操作触发。",
+        "文件变更经过审阅；本图省略管理子流程。"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "交付的是调用提示词",
+      "items": [
+        "复制完成后，由用户到 Codex 发起任务。",
+        "源码依据：NaCr05/skill-atlas · fc98b42。"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Skill Atlas · Local Skill workspace",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/NaCr05/skill-atlas",
+      "revision": "fc98b4263580077a87f1f633666f4bd78b3e678f"
+    },
+    "legend": {
+      "entries": {
+        "database": {
+          "label": "Local files"
+        },
+        "security": {
+          "label": "Review & confirm"
+        }
+      }
+    }
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [
+      44,
+      90
+    ],
+    "cols": 4,
+    "cellW": 198,
+    "cellH": 94,
+    "gapX": 108,
+    "gapY": 172
+  },
+  "components": [
+    {
+      "id": "skill_files",
+      "type": "database",
+      "label": "Installed Skills",
+      "sublabel": "SKILL.md + resources",
+      "tag": "Local source of truth",
+      "row": 0,
+      "col": 0,
+      "sources": [
+        {
+          "path": "src/core/skills/paths.ts",
+          "label": "Personal / system / plugin roots"
+        }
+      ]
+    },
+    {
+      "id": "inventory",
+      "type": "backend",
+      "label": "Local inventory",
+      "sublabel": "Scan / parse / summarize",
+      "tag": "Local Next.js service",
+      "row": 0,
+      "col": 1,
+      "sources": [
+        {
+          "path": "src/core/skills/discover.ts",
+          "line": 154,
+          "end_line": 169,
+          "label": "Read and parse Skills"
+        },
+        {
+          "path": "src/components/catalog-page.tsx",
+          "line": 10,
+          "end_line": 12,
+          "label": "Serve initial summaries"
+        }
+      ]
+    },
+    {
+      "id": "workbench",
+      "type": "frontend",
+      "label": "Catalog & Prompt",
+      "sublabel": "Find / build locally",
+      "tag": "Browser",
+      "row": 0,
+      "col": 2,
+      "sources": [
+        {
+          "path": "src/components/dashboard-client.tsx",
+          "line": 81,
+          "end_line": 109,
+          "label": "Local filtering and selection"
+        },
+        {
+          "path": "src/components/invocation-builder.tsx",
+          "line": 56,
+          "end_line": 60,
+          "label": "Build the default Prompt in-browser"
+        }
+      ]
+    },
+    {
+      "id": "codex",
+      "type": "external",
+      "label": "Use in Codex",
+      "sublabel": "Paste, then start a task",
+      "tag": "Outside Skill Atlas",
+      "row": 0,
+      "col": 3,
+      "sources": [
+        {
+          "path": "src/components/invocation-builder.tsx",
+          "line": 84,
+          "end_line": 100,
+          "label": "Copy to the clipboard"
+        }
+      ]
+    },
+    {
+      "id": "skill_sources",
+      "type": "external",
+      "label": "Skill sources",
+      "sublabel": "GitHub / marketplaces",
+      "tag": "On-demand network",
+      "row": 1,
+      "col": 0,
+      "sources": [
+        {
+          "path": "docs/architecture.md",
+          "label": "Marketplace and installation model"
+        }
+      ]
+    },
+    {
+      "id": "reviewed_changes",
+      "type": "security",
+      "label": "Reviewed changes",
+      "sublabel": "Install + lifecycle",
+      "tag": "Review, confirm, recover",
+      "row": 1,
+      "col": 1,
+      "sources": [
+        {
+          "path": "docs/architecture.md",
+          "label": "Review plans and lifecycle modules"
+        }
+      ]
+    },
+    {
+      "id": "ai_gateway",
+      "type": "backend",
+      "label": "AI endpoint",
+      "sublabel": "Credentials / validation",
+      "tag": "Optional local service",
+      "row": 1,
+      "col": 2,
+      "sources": [
+        {
+          "path": "src/app/api/prompt/route.ts",
+          "line": 18,
+          "end_line": 30,
+          "label": "Explicit enhancement request"
+        }
+      ]
+    },
+    {
+      "id": "ai_provider",
+      "type": "cloud",
+      "label": "OpenAI / DeepSeek",
+      "sublabel": "Bounded Prompt context",
+      "tag": "External model service",
+      "row": 1,
+      "col": 3,
+      "sources": [
+        {
+          "path": "src/core/skills/prompt.ts",
+          "line": 17,
+          "end_line": 25,
+          "label": "Outbound context"
+        },
+        {
+          "path": "src/core/skills/prompt.ts",
+          "line": 153,
+          "end_line": 216,
+          "label": "Enhancement and local fallback"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Skill Atlas · Local application",
+      "wraps": [
+        "inventory",
+        "workbench",
+        "reviewed_changes",
+        "ai_gateway"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "read_skill_files",
+      "from": "skill_files",
+      "to": "inventory",
+      "label": "Read files",
+      "variant": "emphasis"
+    },
+    {
+      "id": "show_inventory",
+      "from": "inventory",
+      "to": "workbench",
+      "label": "Summaries",
+      "variant": "emphasis"
+    },
+    {
+      "id": "manual_handoff",
+      "from": "workbench",
+      "to": "codex",
+      "label": "Copy / paste",
+      "variant": "emphasis"
+    },
+    {
+      "id": "review_source",
+      "from": "skill_sources",
+      "to": "reviewed_changes",
+      "label": "Source review"
+    },
+    {
+      "id": "confirm_change",
+      "from": "workbench",
+      "to": "reviewed_changes",
+      "label": "Confirm review",
+      "variant": "security",
+      "fromSide": "left",
+      "toSide": "top"
+    },
+    {
+      "id": "mutate_personal",
+      "from": "reviewed_changes",
+      "to": "skill_files",
+      "label": "Personal files",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "explicit_ai",
+      "from": "workbench",
+      "to": "ai_gateway",
+      "label": "Click Enhance",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top",
+      "labelAt": [
+        716,
+        164
+      ]
+    },
+    {
+      "id": "provider_request",
+      "from": "ai_gateway",
+      "to": "ai_provider",
+      "label": "HTTPS",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Local by default",
+      "items": [
+        "Read installed files; find Skills and build Prompts without AI.",
+        "Browser localStorage keeps notes, preferences and history."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "External services on demand",
+      "items": [
+        "Marketplace search and AI enhancement require user action.",
+        "File changes are reviewed; management subflows are omitted."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "The result is an invocation Prompt",
+      "items": [
+        "The user copies it and starts a separate task in Codex.",
+        "Source: NaCr05/skill-atlas at fc98b42."
+      ]
+    }
+  ]
+}

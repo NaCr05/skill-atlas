@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Skill Atlas · From discovery to invocation Prompt",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1060,
+      652
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "Readiness check"
+        },
+        "backend": {
+          "label": "Local service"
+        },
+        "frontend": {
+          "label": "Browser action"
+        },
+        "cloud": {
+          "label": "Optional AI"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "local_service",
+      "label": "Local service · Read installed files"
+    },
+    {
+      "id": "browser",
+      "label": "Browser · Default path"
+    },
+    {
+      "id": "optional_ai",
+      "label": "Optional enhancement · Explicit click"
+    },
+    {
+      "id": "needs_attention",
+      "label": "Needs attention · Copy unavailable",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "scan",
+    "summarize",
+    "select_skill",
+    "base_prompt",
+    "ready_gate",
+    "copy_prompt",
+    "paste_codex"
+  ],
+  "nodes": [
+    {
+      "id": "scan",
+      "lane": "local_service",
+      "col": 0,
+      "type": "backend",
+      "label": "Scan files",
+      "sublabel": "Installed Skills"
+    },
+    {
+      "id": "summarize",
+      "lane": "local_service",
+      "col": 1,
+      "type": "backend",
+      "label": "Summaries",
+      "sublabel": "Load / rescan"
+    },
+    {
+      "id": "select_skill",
+      "lane": "browser",
+      "col": 1,
+      "type": "frontend",
+      "label": "Pick Skill",
+      "sublabel": "Find locally"
+    },
+    {
+      "id": "base_prompt",
+      "lane": "browser",
+      "col": 2,
+      "type": "frontend",
+      "label": "Local Prompt",
+      "sublabel": "Task + $skill-name",
+      "width": 144
+    },
+    {
+      "id": "ready_gate",
+      "lane": "browser",
+      "col": 3,
+      "type": "security",
+      "label": "Copy ready?",
+      "sublabel": "Ready state only"
+    },
+    {
+      "id": "copy_prompt",
+      "lane": "browser",
+      "col": 4,
+      "type": "frontend",
+      "label": "Copy Prompt",
+      "sublabel": "Clipboard + log"
+    },
+    {
+      "id": "paste_codex",
+      "lane": "browser",
+      "col": 5,
+      "type": "external",
+      "label": "Use in Codex",
+      "sublabel": "Paste / start task"
+    },
+    {
+      "id": "request_ai",
+      "lane": "optional_ai",
+      "col": 2,
+      "type": "backend",
+      "label": "POST /api/prompt",
+      "sublabel": "Read server config",
+      "width": 160
+    },
+    {
+      "id": "enhance_or_fallback",
+      "lane": "optional_ai",
+      "col": 3,
+      "type": "backend",
+      "label": "AI / fallback",
+      "sublabel": "Optional provider",
+      "width": 120
+    },
+    {
+      "id": "fix_readiness",
+      "lane": "needs_attention",
+      "col": 3,
+      "type": "security",
+      "label": "Review / setup",
+      "sublabel": "Resolve blockers"
+    }
+  ],
+  "edges": [
+    {
+      "id": "scan_to_summary",
+      "from": "scan",
+      "to": "summarize",
+      "label": "Omit instructions"
+    },
+    {
+      "id": "summary_to_select",
+      "from": "summarize",
+      "to": "select_skill",
+      "label": "Show catalog"
+    },
+    {
+      "id": "select_to_prompt",
+      "from": "select_skill",
+      "to": "base_prompt",
+      "label": "Add task",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prompt_to_gate",
+      "from": "base_prompt",
+      "to": "ready_gate",
+      "label": "Default",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gate_to_copy",
+      "from": "ready_gate",
+      "to": "copy_prompt",
+      "label": "ready",
+      "variant": "emphasis"
+    },
+    {
+      "id": "copy_to_codex",
+      "from": "copy_prompt",
+      "to": "paste_codex",
+      "label": "User pastes",
+      "variant": "emphasis"
+    },
+    {
+      "id": "explicit_enhance",
+      "from": "base_prompt",
+      "to": "request_ai",
+      "label": "Click Enhance",
+      "variant": "dashed"
+    },
+    {
+      "id": "enhance_request",
+      "from": "request_ai",
+      "to": "enhance_or_fallback",
+      "label": "Check config",
+      "variant": "dashed"
+    },
+    {
+      "id": "enhanced_result",
+      "from": "enhance_or_fallback",
+      "to": "ready_gate",
+      "label": "Return Prompt",
+      "variant": "dashed"
+    },
+    {
+      "id": "gate_denied",
+      "from": "ready_gate",
+      "to": "fix_readiness",
+      "label": "review / setup",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "scan"
+    ],
+    "allowedTerminals": [
+      "paste_codex",
+      "fix_readiness"
+    ],
+    "requiredEdges": [
+      {
+        "from": "base_prompt",
+        "to": "ready_gate"
+      },
+      {
+        "from": "base_prompt",
+        "to": "request_ai"
+      },
+      {
+        "from": "ready_gate",
+        "to": "copy_prompt"
+      }
+    ],
+    "requiredPaths": [
+      {
+        "from": "scan",
+        "to": "paste_codex"
+      }
+    ]
+  },
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "No API key required",
+      "items": [
+        "The browser builds the default Prompt after Skill selection.",
+        "Copy and AI require readiness; successful copies record local usage."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Enhancement has a local fallback",
+      "items": [
+        "OpenAI / DeepSeek are optional; no silent provider failover.",
+        "Missing config, request failure or invalid output keeps the base Prompt."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Where this flow ends",
+      "items": [
+        "The user pastes into Codex and starts a separate task.",
+        "Source: fc98b42; node-to-code mapping is in docs/diagrams."
+      ]
+    }
+  ]
+}

@@ -16,6 +16,8 @@
 - [ ] Desktop and mobile UI checked when applicable / 如涉及界面，已检查桌面端和移动端
 - [ ] Chinese and English UI checked when applicable / 如涉及界面文案，已检查中英文
 
+- [ ] Architecture/flow changes are reflected in both READMEs, diagram sources, and generated images when applicable / 如涉及架构或关键流程，已同步中英文 README、图源及导出图片
+
 ## Security and privacy / 安全与隐私
 
 <!-- Describe filesystem, network, credential, storage, or installer impact. Write “None” when not applicable. -->

@@ -14,20 +14,57 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 
 ![Skill Atlas 控制面板](artifacts/dashboard-desktop.png)
 
-## 为什么需要 Skill Atlas？
+[下载 Windows 安装包](https://github.com/NaCr05/skill-atlas/releases/tag/v0.2.0) · [从源码启动](#快速启动) · [架构说明](docs/architecture.md) · [参与贡献](CONTRIBUTING.md)
 
-当 Skill 越装越多时，人很难记住每个 Skill 的功能、触发规则、依赖和来源。Skill Atlas 把这些信息集中展示，并帮助你从“这项任务该用什么？”快速走到一段可以复制到 Codex 的调用 Prompt，同时不会修改已经安装的 Skill 文件。
+## 先体验核心流程
 
-| 你的需求 | Skill Atlas 提供的能力 |
-| --- | --- |
-| 发现并选择 | 按名称或任务搜索已安装 Skill，探索市场候选；只有本地匹配不够时，才显式请求 AI 辅助排序。 |
-| 操作前看清 | 核对原始说明、来源文件、依赖和关联关系，并分别判断结构、调用规则与环境是否就绪。 |
-| 正确调用并复用 | 生成可编辑的双语 Prompt，保存有效配方，并组合 2–8 个 Skill 的有序工作流，但不自动执行。 |
-| 安全管理 | 安装或更新前先看差异，处理重复入口和缺失依赖，并通过可恢复控制停用、恢复、归档或移除个人 Skill。 |
-| 跟踪与恢复 | 查看实时操作、逐阶段审计记录，以及更新备份、停用 Skill 和重复归档。 |
-| 保护本地数据 | 目录、备注、反馈汇总和历史保留在本机；导出排除 API Key，外部请求和 AI 调用均需显式触发。 |
+1. **查找**：按名称或任务搜索已安装的 Skill。
+2. **选择**：确认 Skill 的就绪状态和调用规则。
+3. **描述任务**：补充需求，编辑本地生成的 Prompt。
+4. **复制使用**：把 Prompt 粘贴到 Codex，并在那里发起任务。
 
-## 目录优先工作流
+这条路径无需 API Key。AI 增强和市场发现各自需要明确点击。**可用**的 Skill 可以复制；**需要审阅**和**需要配置**会说明应先处理的阻碍。
+
+## 架构概览
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="artifacts/diagrams/overview.zh-CN.dark.png">
+  <img src="artifacts/diagrams/overview.zh-CN.png" alt="本地文件、浏览器、审阅后变更与可选外部服务之间的关系" width="100%">
+</picture>
+
+[查看可放大的 SVG](artifacts/diagrams/overview.zh-CN.svg)
+
+浏览器负责本地匹配和默认 Prompt 生成；本地服务读取已安装文件并执行审阅后的变更。外部服务按需使用，最终由用户把提示词交给 Codex 执行。详见[架构与数据边界](docs/architecture.md)。
+
+<details>
+<summary><b>关键流程：从发现 Skill 到可复制的调用提示词</b></summary>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="artifacts/diagrams/invocation.zh-CN.dark.png">
+  <img src="artifacts/diagrams/invocation.zh-CN.png" alt="从本地发现到可复制提示词，包含可选 AI 分支与就绪阻碍" width="100%">
+</picture>
+
+[查看可放大的 SVG](artifacts/diagrams/invocation.zh-CN.svg)
+
+默认路径在本地完成；复制与 AI 增强均要求 Skill 就绪。可选 AI 分支会检查结果，必要时回退到基础 Prompt。Skill Atlas 的流程止于复制，不会自动执行 Codex 任务。[查看节点对应的源码依据](docs/diagrams/README.md#source-evidence)。
+
+</details>
+
+## 核心能力与依据
+
+| 能力 | 当前行为 | 可核查依据 |
+| --- | --- | --- |
+| 查找与调用 | 本地匹配和双语 Prompt 生成无需模型密钥。 | [Prompt 测试](tests/unit/prompt.test.ts)、[显式 AI 操作](tests/e2e/ai-assist.spec.ts) |
+| 可选 AI | 增强结果检查触发词和语言；失败保留本地结果，不静默切换提供商重试。 | [Prompt 实现](src/core/skills/prompt.ts)、[失败场景](tests/unit/prompt.test.ts) |
+| 受控目录规模 | 每页最多渲染 20 条结果；用 500/1,000 条摘要样本检查本地搜索与排序。 | [规模基准](tests/performance/catalog-scale.test.ts)、[测试范围](docs/testing.md) |
+| 审阅与恢复 | 安装和生命周期变更各自经过对应的审阅、确认边界。 | [安全模型](docs/security-model.md)、[生命周期说明](docs/skill-lifecycle.md) |
+| 本地复用 | 保存配方、编排 2–8 个 Skill 的有序工作流，并在本地记录复制后的效果反馈。 | [个人库实现](src/core/personal-library.ts)、[本地反馈模型](docs/architecture.md#local-feedback-loop) |
+| Windows 验证 | CI 执行类型、格式、单元/集成、构建和浏览器检查。 | [CI 配置](.github/workflows/ci.yml)、[当前运行记录](https://github.com/NaCr05/skill-atlas/actions/workflows/ci.yml) |
+
+这些链接说明已有行为和验证范围，不代表已经测得模型效果或性能提升比例。
+
+<details>
+<summary><b>深入了解目录布局、就绪状态、配方与反馈</b></summary>
 
 首页现在就是技能目录，而不是统计面板。顶部只有一个“查找 Skill”入口：输入精确名称可以直接定位，输入任务描述会立即生成本地推荐；AI 深度推荐和市场搜索始终需要分别点击才会调用外部服务。
 
@@ -37,7 +74,10 @@ Skill Atlas 是一个面向 Windows、在本机运行的 Codex Skills 管理面�
 
 Builder 中的**能力印记**会把来源与作者、结构、环境、调用方式、依赖、最近使用和当前推荐理由压缩在一张卡片中。填写任务与自定义要求后，可以保存为本地 Prompt 配方；复制后可选择“有帮助 / 没解决 / 选错 Skill”，推荐只使用这些本地汇总结果调整排序，不保存或上传对话正文。左侧的**配方与工作流**页面可直接复用配方，也能保存、排序和复制多 Skill 工作流。工作流第一阶段只生成组合 Prompt，绝不自动执行 Codex。
 
-## 产品导览
+</details>
+
+<details>
+<summary><b>更多界面：查看详情、安全安装与小屏使用</b></summary>
 
 <table>
   <tr>
@@ -57,6 +97,8 @@ Builder 中的**能力印记**会把来源与作者、结构、环境、调用�
     </td>
   </tr>
 </table>
+
+</details>
 
 ## 快速启动
 

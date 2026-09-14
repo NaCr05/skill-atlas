@@ -1,0 +1,268 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Skill Atlas · 从发现到调用提示词",
+    "locale": "zh-CN",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1040,
+      652
+    ],
+    "legend": {
+      "entries": {
+        "security": {
+          "label": "就绪检查"
+        },
+        "backend": {
+          "label": "本地服务"
+        },
+        "frontend": {
+          "label": "浏览器操作"
+        },
+        "cloud": {
+          "label": "可选 AI"
+        }
+      }
+    }
+  },
+  "lanes": [
+    {
+      "id": "local_service",
+      "label": "本地服务 · 读取已安装文件"
+    },
+    {
+      "id": "browser",
+      "label": "浏览器 · 默认路径"
+    },
+    {
+      "id": "optional_ai",
+      "label": "可选增强 · 用户点击后联网"
+    },
+    {
+      "id": "needs_attention",
+      "label": "需要处理 · 暂不可复制",
+      "variant": "exception"
+    }
+  ],
+  "mainPath": [
+    "scan",
+    "summarize",
+    "select_skill",
+    "base_prompt",
+    "ready_gate",
+    "copy_prompt",
+    "paste_codex"
+  ],
+  "nodes": [
+    {
+      "id": "scan",
+      "lane": "local_service",
+      "col": 0,
+      "type": "backend",
+      "label": "扫描与解析",
+      "sublabel": "已安装 Skill"
+    },
+    {
+      "id": "summarize",
+      "lane": "local_service",
+      "col": 1,
+      "type": "backend",
+      "label": "提供摘要库存",
+      "sublabel": "首屏 / 手动重扫"
+    },
+    {
+      "id": "select_skill",
+      "lane": "browser",
+      "col": 1,
+      "type": "frontend",
+      "label": "查找并选择",
+      "sublabel": "本地筛选与推荐"
+    },
+    {
+      "id": "base_prompt",
+      "lane": "browser",
+      "col": 2,
+      "type": "frontend",
+      "label": "生成本地 Prompt",
+      "sublabel": "任务 + $skill-name",
+      "width": 144
+    },
+    {
+      "id": "ready_gate",
+      "lane": "browser",
+      "col": 3,
+      "type": "security",
+      "label": "允许复制？",
+      "sublabel": "仅 ready 状态"
+    },
+    {
+      "id": "copy_prompt",
+      "lane": "browser",
+      "col": 4,
+      "type": "frontend",
+      "label": "用户点击复制",
+      "sublabel": "剪贴板 + 本地记录"
+    },
+    {
+      "id": "paste_codex",
+      "lane": "browser",
+      "col": 5,
+      "type": "external",
+      "label": "粘贴到 Codex",
+      "sublabel": "用户另行发起任务"
+    },
+    {
+      "id": "request_ai",
+      "lane": "optional_ai",
+      "col": 2,
+      "type": "backend",
+      "label": "POST /api/prompt",
+      "sublabel": "服务端读取配置",
+      "width": 160
+    },
+    {
+      "id": "enhance_or_fallback",
+      "lane": "optional_ai",
+      "col": 3,
+      "type": "backend",
+      "label": "增强与回退",
+      "sublabel": "可选调用外部模型",
+      "width": 120
+    },
+    {
+      "id": "fix_readiness",
+      "lane": "needs_attention",
+      "col": 3,
+      "type": "security",
+      "label": "查看阻碍原因",
+      "sublabel": "先配置或审阅"
+    }
+  ],
+  "edges": [
+    {
+      "id": "scan_to_summary",
+      "from": "scan",
+      "to": "summarize",
+      "label": "去除指令正文"
+    },
+    {
+      "id": "summary_to_select",
+      "from": "summarize",
+      "to": "select_skill",
+      "label": "展示目录"
+    },
+    {
+      "id": "select_to_prompt",
+      "from": "select_skill",
+      "to": "base_prompt",
+      "label": "输入任务",
+      "variant": "emphasis"
+    },
+    {
+      "id": "prompt_to_gate",
+      "from": "base_prompt",
+      "to": "ready_gate",
+      "label": "默认路径",
+      "variant": "emphasis"
+    },
+    {
+      "id": "gate_to_copy",
+      "from": "ready_gate",
+      "to": "copy_prompt",
+      "label": "ready",
+      "variant": "emphasis"
+    },
+    {
+      "id": "copy_to_codex",
+      "from": "copy_prompt",
+      "to": "paste_codex",
+      "label": "用户粘贴",
+      "variant": "emphasis"
+    },
+    {
+      "id": "explicit_enhance",
+      "from": "base_prompt",
+      "to": "request_ai",
+      "label": "点击 AI 增强",
+      "variant": "dashed"
+    },
+    {
+      "id": "enhance_request",
+      "from": "request_ai",
+      "to": "enhance_or_fallback",
+      "label": "检查配置",
+      "variant": "dashed"
+    },
+    {
+      "id": "enhanced_result",
+      "from": "enhance_or_fallback",
+      "to": "ready_gate",
+      "label": "返回可用 Prompt",
+      "variant": "dashed"
+    },
+    {
+      "id": "gate_denied",
+      "from": "ready_gate",
+      "to": "fix_readiness",
+      "label": "review / setup",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "semanticChecks": {
+    "allowedRoots": [
+      "scan"
+    ],
+    "allowedTerminals": [
+      "paste_codex",
+      "fix_readiness"
+    ],
+    "requiredEdges": [
+      {
+        "from": "base_prompt",
+        "to": "ready_gate"
+      },
+      {
+        "from": "base_prompt",
+        "to": "request_ai"
+      },
+      {
+        "from": "ready_gate",
+        "to": "copy_prompt"
+      }
+    ],
+    "requiredPaths": [
+      {
+        "from": "scan",
+        "to": "paste_codex"
+      }
+    ]
+  },
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "无需 API Key 即可使用",
+      "items": [
+        "默认 Prompt 在浏览器生成，选择 Skill 就可预览。",
+        "复制和 AI 增强均要求 ready；复制成功后记录本地使用。"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "增强失败仍保留本地结果",
+      "items": [
+        "OpenAI / DeepSeek 是可选分支，不自动跨提供商重试。",
+        "缺少配置、请求失败或输出无效时保留本地 Prompt。"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "本图的终点",
+      "items": [
+        "用户把提示词粘贴到 Codex，后续执行由新任务承接。",
+        "依据 fc98b42；节点与源码对应表见 docs/diagrams。"
+      ]
+    }
+  ]
+}

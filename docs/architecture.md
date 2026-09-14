@@ -4,6 +4,26 @@
 
 Skill Atlas is one local Next.js process and one browser session. It has no database, account system, background agent, or cloud state. Installed files are authoritative; inferred fields exist only in the scan response.
 
+## Invocation flow and data boundaries
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../artifacts/diagrams/invocation.en.dark.png">
+  <img src="../artifacts/diagrams/invocation.en.png" alt="Discovery, local Prompt generation, optional AI, and manual handoff to Codex" width="100%">
+</picture>
+
+This view covers the single-Skill invocation path. Marketplace discovery, installation, and lifecycle transactions remain separate flows in the map below. The same flow is available in [Chinese](../artifacts/diagrams/invocation.zh-CN.png); [editable diagram sources and evidence](diagrams/README.md) are kept alongside these docs.
+
+| Boundary | What happens here | Evidence |
+| --- | --- | --- |
+| Installed files → local service | Discovery parses the installed files. List and rescan responses expose `SkillSummary`, without full instruction bodies. | [Discovery](../src/core/skills/discover.ts), [catalog entry](../src/components/catalog-page.tsx) |
+| Local service → browser | The catalog receives summaries; filtering, recommendations, and the default Prompt run locally in the browser. | [Catalog client](../src/components/dashboard-client.tsx), [invocation Builder](../src/components/invocation-builder.tsx) |
+| Browser → optional AI | The AI button is enabled only for a ready Skill. An explicit enhancement click calls `POST /api/prompt`. Credentials are read server-side; only the Skill name, description, and base Prompt go to the selected provider. | [Prompt route](../src/app/api/prompt/route.ts), [provider input and fallback](../src/core/skills/prompt.ts) |
+| Readiness → copy | The Builder gates copying on readiness. A completed copy records browser-local usage; the user pastes the Prompt into Codex and starts a separate task. | [Copy handler and controls](../src/components/invocation-builder.tsx), [local workspace](../src/core/local-workspace.ts) |
+
+Missing AI configuration, request failure, or invalid output returns the base Prompt. This is a local fallback, not a second model request. Readiness still controls copying after enhancement. The diagram does not represent Codex execution or an autonomous agent loop.
+
+## Detailed system map
+
 ```mermaid
 flowchart LR
   Launcher["CMD or PowerShell launcher"] --> Preflight["project + Node + npm + dependencies + port"]
